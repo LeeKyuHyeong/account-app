@@ -12,7 +12,7 @@
 ## 진행 현황 (요약)
 
 ```
-Week 1: ▓▓▓▓▓░░  Task 5/6 완료
+Week 1: ▓▓▓▓▓▓░  Task 6 코드 통합 완료 / 통합 테스트·Acceptance 보류
 Week 2-6:  대기
 v1.1+:     대기
 ```
@@ -77,14 +77,18 @@ v1.1+:     대기
 - 커밋: `feat(api): add JWT authentication with household_id claim`
 
 ### Task 6. account-ai 모듈 멀티 모듈 통합
-- [ ] `account-core`에 `JpaMerchantHistoryProvider implements MerchantHistoryProvider`
-- [ ] `account-ai`의 `ReceiptController` → `account-api`로 이전 (`@RestController`는 api 모듈)
-- [ ] `account-ai`에서 `X-Household-Id` 헤더 처리 제거 → JWT 클레임 사용
-- [ ] `account-api/build.gradle.kts`에 `implementation(project(":account-ai"))` 추가
-- [ ] 영수증 업로드 → DRAFT 거래 자동 생성 흐름
-- [ ] 이미지 저장 경로: 개발 `./data/receipts/{hid}/{yyyy}/{mm}/{uuid}.jpg`, 운영 `/mnt/data/receipts/...`
-- [ ] 통합 테스트: 업로드 → DRAFT 거래 → 본인 가구로만 조회
-- [ ] Acceptance: `curl -X POST .../api/receipts -F "image=@..."` 실제 분석 + DB 저장 (Claude API 키 있는 환경)
+- [x] `JpaMerchantHistoryProvider implements MerchantHistoryProvider` — **위치 변경**: `account-api/ai/` 에 배치. account-core/build.gradle.kts 의 "다른 어떤 account-* 모듈에도 의존하지 않음" 정책이 강해서 core 가 ai 의 인터페이스를 implements 하려면 의존 역전이 필요. account-api 가 양쪽 모듈에 합법 의존하는 합성 모듈이라 어댑터 적격
+- [x] `account-ai`의 `ReceiptController` → `account-api/receipt/`로 이전 (account-ai 는 이제 library jar)
+- [x] `X-Household-Id` 헤더 처리 제거 — 컨트롤러는 `Authentication` 에서 user_id 추출, 가구 ID 는 `HouseholdContext` (JWT 필터 set) 에서 자동 조회
+- [x] `account-api/build.gradle.kts`에 `implementation(project(":account-ai"))` (Task 1 셋업 시점에 이미 추가됨, no-op 확인)
+- [x] 영수증 업로드 → Receipt + DRAFT Transaction 자동 생성 (`ReceiptIngestionService`, @Transactional)
+- [x] 이미지 저장: `ReceiptStorage` — `{account.receipts.storage-root}/{hid}/{yyyy}/{mm}/{uuid}.{ext}`. 개발 기본값 `./data/receipts` (gitignored), 운영 `ACCOUNT_RECEIPTS_STORAGE_ROOT=/mnt/data/receipts` 로 오버라이드
+- [x] 카테고리 매칭 — 정확 일치 → "기타 변동" → 첫 VARIABLE → 첫 카테고리 fallback (DRAFT 거래 절대 실패 안 함, 사용자 확정 시 수정)
+- [x] `MerchantHistoryRepository.findAllByOrderByCountDescLastUsedAtDesc(Pageable)` + `findByMerchantName(String)` 추가 (가구 격리는 Hibernate `@Filter` 자동 적용)
+- [x] `StubMerchantHistoryProvider` 완전 삭제
+- [x] `./gradlew build -x test` 통과 + 기존 `ReceiptAnalysisServiceTest` 6건 통과
+- [ ] **보류**: 영수증 인제스천 통합 테스트 — `HouseholdIsolationIntegrationTest` 와 동일한 Docker Desktop / Testcontainers 비호환으로 보류. Linux CI 또는 TCP 노출 시점에 작성
+- [ ] **보류**: Acceptance `curl -X POST /api/receipts -F "image=@..."` — 실제 영수증 이미지 + Claude API 키 있는 환경에서 사용자가 수동 검증
 - 커밋: `feat(api): integrate account-ai with multi-module structure`
 
 ### Week 1 완료 기준

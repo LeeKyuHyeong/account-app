@@ -59,6 +59,11 @@ spring:
 server:
   port: 8080
 
+# 영수증 이미지 저장 루트.
+#   개발: ./data/receipts (프로젝트 루트 기준, gitignored)
+#   운영: ACCOUNT_RECEIPTS_STORAGE_ROOT=/mnt/data/receipts 환경변수로 오버라이드
+# 실제 경로 = {root}/{householdId}/{yyyy}/{mm}/{uuid}.{ext}
+
 # 시크릿 placeholder — 실제 운영 값은 환경변수 또는 application-secret.yml 에서 주입.
 # 본 placeholder 는 ApplicationContext 기동 검증용. 실제 Claude 호출 시 401 발생.
 account:
@@ -70,6 +75,8 @@ account:
     secret: ${ACCOUNT_JWT_SECRET:}
     access-ttl: ${ACCOUNT_JWT_ACCESS_TTL:PT15M}
     refresh-ttl: ${ACCOUNT_JWT_REFRESH_TTL:P30D}
+  receipts:
+    storage-root: ${ACCOUNT_RECEIPTS_STORAGE_ROOT:./data/receipts}
 
 logging:
   level:
