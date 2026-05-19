@@ -31,11 +31,10 @@ spring:
       connection-timeout: 10000
 
   # ─── JPA / Hibernate ───
-  # 스키마 관리는 Flyway 단독 책임. JPA 는 검증만 (Task 3 에서 entity 추가 후
-  # 'none' → 'validate' 로 격상 권장. 본 시점은 entity 가 없으므로 'none').
+  # 스키마 관리는 Flyway 단독 책임. JPA 는 entity ↔ schema 정합성 검증만 수행.
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect

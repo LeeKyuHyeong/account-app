@@ -7,9 +7,9 @@ import org.springframework.context.annotation.ComponentScan;
 /**
  * account-api 진입점.
  *
- * <p>Task 1: stub — 멀티 모듈 빌드 검증용. account-ai 의 컨트롤러를 스캔하므로
- * com.kyuhyeong.account 패키지 전체를 포함한다. account-core 의 Entity/Repository
- * 스캔은 Task 3 (JPA Entity) 에서 활성화한다.
+ * <p>account-core / account-ai 의 Bean 을 함께 스캔하기 위해 패키지 베이스를
+ * {@code com.kyuhyeong.account} 로 확장. JPA Entity / Repository 스캔 설정은
+ * {@code account-core} 의 {@code JpaConfig} 가 캡슐화하여 보유.
  */
 @SpringBootApplication
 @ComponentScan(basePackages = "com.kyuhyeong.account")

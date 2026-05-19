@@ -3,7 +3,7 @@
 부부/가구 단위 가계부 앱. 영수증 사진을 찍으면 Claude Vision API가 OCR + 카테고리 자동 분류 후 저장한다. Multi-tenant(가구 단위) 구조로 처음부터 설계되어 추후 가까운 인원(20명 내외)으로의 확장이 가능.
 
 **Repo**: <https://github.com/LeeKyuHyeong/account-app>
-**현재 페이즈**: `Week 1 — 기반 + Multi-tenant 셋업` (Task 1~2 완료, Task 3~6 진행 예정)
+**현재 페이즈**: `Week 1 — 기반 + Multi-tenant 셋업` (Task 1~3 완료, Task 4~6 진행 예정)
 
 ## 설계 / 작업 지시서
 
@@ -17,8 +17,8 @@
 | 모듈 | 상태 | 책임 |
 |---|---|---|
 | `account-ai` | ✅ 프로토타입 + 멀티 모듈 편입 완료 | Claude Vision API 통합, 영수증 OCR + 카테고리 분류 |
-| `account-api` | 🟡 스켈레톤(`AccountApiApplication` + MariaDB + Flyway 기동 OK) | REST 엔드포인트, JWT 인증, 가구 격리 진입점 |
-| `account-core` | 🟡 Flyway 스키마 완료(`V1`/`V2`), Entity/Repository 미작성 | Entity, Repository, Service. Multi-tenant 격리 본체 |
+| `account-api` | 🟡 스켈레톤(`AccountApiApplication` + MariaDB + JPA validate 통과) | REST 엔드포인트, JWT 인증, 가구 격리 진입점 |
+| `account-core` | 🟡 Flyway(`V1`/`V2`) + Entity 12 + Repository 12 + enum 5 완성. `@Filter` 미적용 | Entity, Repository, Service. Multi-tenant 격리 본체 |
 | `account-batch` | ⏳ Week 4+ | 월말 집계, 이미지 정리, 알림 발송 |
 | `flutter-app` | ⏳ Week 2+ | 모바일 앱 (iOS/Android) |
 | `docs/` | ✅ 본 문서 | 설계 + 작업 지시서 |
@@ -29,8 +29,8 @@
 |---|---|---|
 | 1 | Gradle 멀티 모듈 루트 셋업 | ✅ 완료 |
 | 2 | MariaDB Docker + Flyway 스키마 | ✅ 완료 |
-| 3 | JPA Entity + Repository | ⏳ 다음 |
-| 4 | HouseholdContext + Hibernate Filter (격리 검증) | ⏳ |
+| 3 | JPA Entity + Repository | ✅ 완료 |
+| 4 | HouseholdContext + Hibernate Filter (격리 검증) | ⏳ 다음 |
 | 5 | JWT 인증 셋업 | ⏳ |
 | 6 | `account-ai` 모듈 멀티 모듈 통합 (`ReceiptController` 이전) | ⏳ |
 

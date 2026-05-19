@@ -12,7 +12,7 @@
 ## 진행 현황 (요약)
 
 ```
-Week 1: ▓▓░░░░░  Task 2/6 완료
+Week 1: ▓▓▓░░░░  Task 3/6 완료
 Week 2-6:  대기
 v1.1+:     대기
 ```
@@ -39,13 +39,16 @@ v1.1+:     대기
 - [x] 알려진 변형: `monthly_summaries.year_month` 는 MariaDB 예약어라 백틱 인용. Task 3 entity 에서 `@Column(name = "`year_month`")` 사용 필요
 - 커밋: `feat(core): add flyway migrations with seed data for two households`
 
-### Task 3. JPA Entity + Repository
-- [ ] `account-core/.../entity/` 하위 Entity 12개
-  - `User`, `Household`, `HouseholdMember`, `Category`, `Transaction`, `TransactionHistory`, `Receipt`, `MerchantHistory`, `MonthlySummary`, `Asset`, `Liability`, `WeddingItem`
-- [ ] enum: `CategoryType`, `TransactionStatus`, `HouseholdRole`, `PlanType`, `ChangeType`
-- [ ] Lombok: `@Getter`, `@NoArgsConstructor(access=PROTECTED)`, `@AllArgsConstructor(access=PRIVATE)`, `@Builder` (Setter 금지 — §10.1)
-- [ ] Repository 인터페이스 (`JpaRepository` 상속, raw query 금지 — §10.5)
-- [ ] 본 단계에서 `@Filter` 활성화는 **하지 않음** (Task 4에서)
+### Task 3. JPA Entity + Repository ✅
+- [x] Entity 12개 (`User`/`Household`/`HouseholdMember`/`Category`/`Transaction`/`TransactionHistory`/`Receipt`/`MerchantHistory`/`MonthlySummary`/`Asset`/`Liability`/`WeddingItem`)
+- [x] enum 5개 (`CategoryType`/`TransactionStatus`/`HouseholdRole`/`PlanType`/`ChangeType`)
+- [x] Lombok 패턴 (`@Getter` + `@NoArgsConstructor(access=PROTECTED)` + `@AllArgsConstructor(access=PRIVATE)` + `@Builder`, Setter 0건)
+- [x] Repository 인터페이스 12개 (`JpaRepository<E, Long>` 기본형, 쿼리 메서드는 필요 시점에 추가)
+- [x] `JpaConfig` (account-core 내 `@Configuration`) — `@EntityScan` + `@EnableJpaRepositories` 캡슐화. account-api 는 component-scan 만으로 자동 등록
+- [x] `application.yml` `ddl-auto: none → validate` 격상
+- [x] Acceptance: `./gradlew :account-api:bootRun` 시 Hibernate validate 통과 + `Started AccountApiApplication`
+- [x] `@Filter` 는 본 단계 미적용 (Task 4)
+- 알려진 변형: `MonthlySummary.yearMonth` 는 `columnDefinition = "CHAR(7)"` 명시 (SQL 의 CHAR(7) 과 일치)
 - 커밋: `feat(core): add JPA entities and repositories for all domain tables`
 
 ### Task 4. HouseholdContext + Hibernate Filter — 본 페이즈 핵심
