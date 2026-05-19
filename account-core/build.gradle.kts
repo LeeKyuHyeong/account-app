@@ -19,6 +19,8 @@ dependencies {
     // ─── Spring Boot ───
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    // Task 4 — HouseholdFilterAspect (Hibernate @Filter 활성화) 용 AOP
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // ─── DB ───
     implementation("org.flywaydb:flyway-core")

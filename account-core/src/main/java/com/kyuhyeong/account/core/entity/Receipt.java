@@ -17,6 +17,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 
 import java.time.LocalDateTime;
 
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
         name = "receipts",
         indexes = @Index(name = "idx_receipts_hid_created", columnList = "household_id, created_at")
 )
+@Filter(name = "householdFilter", condition = "household_id = :currentHouseholdId")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

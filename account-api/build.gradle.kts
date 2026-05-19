@@ -25,6 +25,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    // account-core 의 JPA starter 가 implementation 스코프라 jakarta.persistence /
+    // @Transactional / JpaRepository 등이 컴파일 노출 안 됨. account-api 도 controller /
+    // service 작성 시 JPA 타입을 직접 다루므로 starter 를 명시 의존.
+    // 향후 account-core 가 java-library plugin 으로 전환되면 api(...) 스코프로 정리 가능.
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // ─── JWT (jjwt) ───
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")

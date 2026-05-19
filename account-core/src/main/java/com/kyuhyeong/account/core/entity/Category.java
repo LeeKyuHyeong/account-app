@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
         name = "categories",
         indexes = @Index(name = "idx_categories_hid_sort", columnList = "household_id, sort_order")
 )
+@Filter(name = "householdFilter", condition = "household_id = :currentHouseholdId")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

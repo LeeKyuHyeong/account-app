@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Filter;
 
 import java.math.BigDecimal;
 
@@ -34,6 +35,7 @@ import java.math.BigDecimal;
                 columnNames = {"household_id", "year_month", "category_id"}
         )
 )
+@Filter(name = "householdFilter", condition = "household_id = :currentHouseholdId")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)

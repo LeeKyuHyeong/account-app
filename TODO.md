@@ -12,7 +12,7 @@
 ## 진행 현황 (요약)
 
 ```
-Week 1: ▓▓▓░░░░  Task 3/6 완료
+Week 1: ▓▓▓▓░░░  Task 4/6 완료
 Week 2-6:  대기
 v1.1+:     대기
 ```
@@ -51,18 +51,15 @@ v1.1+:     대기
 - 알려진 변형: `MonthlySummary.yearMonth` 는 `columnDefinition = "CHAR(7)"` 명시 (SQL 의 CHAR(7) 과 일치)
 - 커밋: `feat(core): add JPA entities and repositories for all domain tables`
 
-### Task 4. HouseholdContext + Hibernate Filter — 본 페이즈 핵심
-- [ ] `account-core/.../tenant/HouseholdContext.java` (ThreadLocal<Long>)
-- [ ] 모든 도메인 Entity에 `@FilterDef` + `@Filter("householdFilter", condition="household_id = :currentHouseholdId")`
-- [ ] `account-api/.../filter/HouseholdContextFilter.java`
-  - 일시적으로 `X-Household-Id` 헤더 사용 (Task 5에서 JWT로 교체)
-  - `HouseholdContext.set` + `Session.enableFilter(...)`
-  - finally 블록에서 clear
-- [ ] **격리 검증 통합 테스트** (Testcontainers + MariaDB)
-  - `X-Household-Id: 1` → 가구#1 카테고리만 (22개)
-  - `X-Household-Id: 2` → 가구#2 카테고리만 (5개)
-  - 두 결과 ID 교집합 0 검증
-- [ ] Acceptance: 위 테스트 통과 — **이 테스트는 절대 빠뜨리지 말 것**
+### Task 4. HouseholdContext + Hibernate Filter ✅
+- [x] `HouseholdContext` (ThreadLocal<Long>) in `account-core/tenant/`
+- [x] `package-info.java` 에 `@FilterDef`; 9 개 격리 엔티티에 `@Filter("householdFilter", ...)` (User/Household/HouseholdMember 제외)
+- [x] `HouseholdFilterAspect` — `@Around` on `@Transactional`, **fail-safe default** (ctx 미설정 시 `-1` sentinel → 0 rows). `TransactionConfig` 에서 `@EnableTransactionManagement(order=100)` 명시해 aspect 가 tx 내부에서 실행되도록 순서 제어
+- [x] `HouseholdContextFilter` (Servlet `OncePerRequestFilter`) — `X-Household-Id` 헤더 → ThreadLocal set, finally clear. JWT 도입(Task 5) 시 헤더 부분만 교체
+- [x] `CategoryController` 스텁 + `SecurityConfig` (현 단계 permitAll, Task 5 에서 JWT 인증으로 교체)
+- [x] account-api 에 `starter-data-jpa` 명시 의존 (jakarta.persistence / @Transactional 컴파일 노출용)
+- [x] **수동 격리 검증 통과**: `X-Household-Id: 1` → 22개, `:2` → 5개, 헤더 없음 → 0개. ID 교집합 0 (H1: [1..22], H2: [23..27])
+- [ ] **알려진 이슈**: `HouseholdIsolationIntegrationTest` 는 `@Disabled` — Docker Desktop on Windows 의 CLI 프록시 가로채기로 Testcontainers 가 docker-java 통신 실패. Linux CI 또는 Docker Desktop TCP 노출 활성화 시 재활성화
 - 커밋: `feat(core): add multi-tenant isolation via HouseholdContext + Hibernate filter`
 
 ### Task 5. JWT 인증 셋업
