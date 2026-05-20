@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
 
@@ -33,20 +34,36 @@ class HomeScreen extends ConsumerWidget {
             final household = me.households.isNotEmpty
                 ? me.households.first
                 : null;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('안녕하세요, ${me.name} 님',
-                    style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(me.email),
-                if (household != null) ...[
-                  const SizedBox(height: 16),
-                  Text('가구: ${household.name} (${household.role})'),
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('안녕하세요, ${me.name} 님',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  Text(me.email, textAlign: TextAlign.center),
+                  if (household != null) ...[
+                    const SizedBox(height: 16),
+                    Text('가구: ${household.name} (${household.role})',
+                        textAlign: TextAlign.center),
+                  ],
+                  const SizedBox(height: 32),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/transactions'),
+                    icon: const Icon(Icons.list_alt),
+                    label: const Text('거래 목록'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/transactions/new'),
+                    icon: const Icon(Icons.add),
+                    label: const Text('거래 추가'),
+                  ),
                 ],
-                const SizedBox(height: 32),
-                const Text('— 거래 목록 / 입력 화면은 다음 PR —'),
-              ],
+              ),
             );
           },
         ),

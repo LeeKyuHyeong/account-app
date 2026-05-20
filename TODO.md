@@ -13,7 +13,7 @@
 
 ```
 Week 1: ▓▓▓▓▓▓░  Task 6 코드 통합 완료 / 통합 테스트·Acceptance 보류
-Week 2: ▓▓░░░░░  Flutter 기반 + 로그인 vertical slice 완료 / 거래 화면 + 백엔드 API 잔여
+Week 2-3: ▓▓▓▓▓░░ Flutter 로그인 + 거래 목록/입력 + 백엔드 API 완료 / Week 4 카메라 대기
 v1.1+:     대기
 ```
 
@@ -105,14 +105,15 @@ v1.1+:     대기
 
 ### Week 2~3. Flutter 셋업 + 거래 입력
 - [x] `flutter_app` 모듈 추가 (`flutter create flutter_app --platforms=android --org=com.kyuhyeong`)
-- [x] 의존성: flutter_riverpod 3.3.1, go_router 17.2.3, dio 5.9.2, flutter_secure_storage 10.2.0, intl 0.20.2
+- [x] 의존성: flutter_riverpod 3.3.1, go_router 17.2.3, dio 5.9.2, flutter_secure_storage 10.2.0, intl 0.20.2, reactive_forms 18.2.2, flutter_localizations
 - [x] 로그인 화면 + JWT 자동 갱신 — AuthInterceptor 가 401 시 `/api/auth/refresh` 호출 후 원 요청 1회 retry, 실패 시 토큰 폐기. flutter_secure_storage 로 access/refresh 영속.
 - [x] go_router redirect — AuthState 변화 시 `_RouterNotifier` 가 router refresh, unauth↔auth 자동 분기
 - [x] Android: INTERNET 권한(main) + cleartext(debug only, 10.0.2.2 개발용)
-- [x] `flutter analyze` 0 issues, `flutter test` 1/1 통과, `flutter build apk --debug` 통과
-- [ ] **백엔드 추가** (별도 PR): `GET /api/transactions` (필터/페이징), `POST /api/transactions` (수동 입력)
-- [ ] 거래 목록 화면 + 필터/페이징 (백엔드 PR 후속)
-- [ ] 수동 거래 입력 폼 (`reactive_forms`) — 백엔드 PR 후속
+- [x] **백엔드 추가**: `GET /api/transactions` (필터=from/to/categoryId/type/status + 페이징, occurred_at DESC), `POST /api/transactions` (수동 입력, CONFIRMED 상태). `JpaSpecificationExecutor` + soft-delete 자동 제외. `GlobalExceptionHandler` 추가 (422 → 필드별 에러).
+- [x] 거래 목록 화면 — 날짜별 그룹핑, intl 통화/날짜 포맷, 무한 스크롤 (loadMore), pull-to-refresh, DRAFT 뱃지.
+- [x] 수동 거래 입력 폼 (`reactive_forms`) — amount/category/occurredAt/merchant/paymentMethod/memo, DatePicker+TimePicker 통합, 카테고리 dropdown, 서버 fieldErrors 표시.
+- [x] flutter_localizations + intl ko_KR locale 데이터 초기화 (DatePicker / DateFormat 한국어).
+- [x] 검증: `./gradlew build`, `flutter analyze` 0 issues, `flutter test` 1/1, `flutter build apk --debug` OK.
 
 ### Week 4. 카메라 + 영수증 촬영
 - [ ] `image_picker` 통합

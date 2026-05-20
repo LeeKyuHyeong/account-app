@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/transaction/presentation/transaction_form_screen.dart';
+import '../features/transaction/presentation/transaction_list_screen.dart';
 
 /// 인증 상태 변화 시 go_router 를 refresh 시키기 위한 어댑터.
 ///
@@ -26,7 +28,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final auth = ref.read(authProvider);
-      // 부팅 직후 토큰 검증 중에는 redirect 보류 — 화면은 그대로 두고 결과 대기.
       if (auth.isLoading || !auth.hasValue) {
         return null;
       }
@@ -44,6 +45,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/transactions',
+        builder: (context, state) => const TransactionListScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (context, state) => const TransactionFormScreen(),
+          ),
+        ],
       ),
     ],
   );
