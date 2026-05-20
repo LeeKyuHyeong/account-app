@@ -16,7 +16,7 @@ Week 1: ▓▓▓▓▓▓░  Task 6 코드 통합 완료 / 통합 테스트·A
 Week 2-3: ▓▓▓▓▓▓░ Flutter 로그인 + 거래 목록/입력 + 백엔드 API 완료
 Week 4:   ▓▓▓▓▓▓░ 카메라 촬영 + 1280px 압축 + 업로드 + 신뢰도 분기 컨펌 + PATCH 완료
 Week 5:   ▓▓▓▓▓▓░ 학습 UPSERT + 월별 집계 + 홈 카드 + 배치 잡 + 시계열 + 추이 차트 완료
-Week 6:   ▓▓▓▓░░░ Dockerfile + 운영 compose + nginx 예시 + CI 완료 / CD + Android signing + LE 발급 대기
+Week 6:   ▓▓▓▓▓░░ Dockerfile + 운영 compose + nginx 예시 + CI + Android signing 완료 / CD + LE 발급 대기
 v1.1+:     대기
 ```
 
@@ -147,7 +147,7 @@ v1.1+:     대기
 - [x] **`.env.prod.example` + 배포 가이드** — `docs/deployment.md` (DNS / Claude 키 / JWT secret 생성 → VPS 준비 → compose 빌드/기동 → nginx + LE 발급 → curl 검증 → Android release APK 빌드)
 - [ ] **Let's Encrypt 발급** — VPS 사용자 수동 단계 (`certbot --nginx -d account.kyuhyeong.com`)
 - [ ] **CD 자동화** — git push to main → GitHub Actions → SSH 로 VPS pull/rebuild/restart. 별도 PR (GitHub Secrets 등록 필요)
-- [ ] **Android release signing** — `flutter_app/android/app/build.gradle.kts` 서명 설정 + keystore 가이드. 별도 PR
+- [x] **Android release signing** — `key.properties` (gitignored) 패턴 + debug fallback. `key.properties.example` 템플릿 + `docs/deployment.md` §7.1~7.3 (keystore 생성 + 백업 정책 포함). 키스토어 자체 생성/Internal Track 업로드는 사용자 수동.
 - [ ] ~~TestFlight 빌드 + 부부 단말 설치~~ — `docs/account.md` §11 #2 변경에 따라 유예 (Android-first MVP)
 - [ ] Android APK Internal Track 배포 — Android release signing PR 후
 

@@ -14,6 +14,11 @@
 *.pem
 *.key
 id_rsa*
+# Android upload keystore (Play Store 업로드 키 — 분실 시 같은 패키지명 업데이트 불가)
+**/key.properties
+*.jks
+*.keystore
+!**/key.properties.example
 
 # ───────────────────────────────────────────────────────────────
 # Java / Gradle

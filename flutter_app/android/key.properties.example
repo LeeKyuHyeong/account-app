@@ -1,0 +1,16 @@
+# Android upload keystore 설정 — 운영 release APK 서명용.
+#
+# 이 파일은 템플릿이다. 실제 값은 `key.properties` (gitignored) 에 적는다:
+#
+#   cp key.properties.example key.properties
+#   chmod 600 key.properties
+#   $EDITOR key.properties
+#
+# 키스토어 생성 + 백업 절차는 docs/deployment.md §7 참조.
+# 절대 커밋 금지 — Play Store 업로드 키 분실 시 같은 패키지명 업데이트 불가.
+
+storePassword=<keystore 전체 비밀번호>
+keyPassword=<alias 비밀번호>
+keyAlias=upload
+# android/ 디렉토리 기준 상대경로. 예: upload-keystore.jks
+storeFile=upload-keystore.jks

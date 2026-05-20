@@ -112,14 +112,48 @@ curl https://account.kyuhyeong.com/api/summary/monthly \
 
 ## 7. Flutter 클라이언트 빌드 (Android)
 
+운영용 release APK 는 별도 업로드 키로 서명해야 한다. `flutter_app/android/key.properties`
+가 없으면 `app/build.gradle.kts` 가 debug 키로 자동 fallback 하므로 CI (`flutter build apk
+--debug`) 와 로컬 dev 흐름은 키스토어 없이도 그대로 동작한다.
+
+### 7.1 Upload keystore 생성 (1회)
+
+`flutter_app/android/` 에서:
+
+```bash
+keytool -genkey -v -keystore upload-keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias upload \
+  -dname "CN=Kyuhyeong Lee, OU=, O=, L=Seoul, ST=, C=KR"
+```
+
+keystore 비밀번호 + alias 비밀번호 2개를 입력한다. **둘 다 비밀번호 매니저에 즉시 저장**한다.
+분실 시 Play Store 에 같은 패키지명으로 업데이트 업로드가 영구 불가 → 앱 신규 등록 강제.
+키스토어 파일 자체도 (1Password attachment / 별도 USB / 암호화된 클라우드 백업 등) 다중
+백업 필수.
+
+### 7.2 `key.properties` 작성
+
+```bash
+cd flutter_app/android
+cp key.properties.example key.properties
+chmod 600 key.properties
+$EDITOR key.properties  # storePassword / keyPassword / storeFile 채우기
+```
+
+`storeFile` 은 `flutter_app/android/` 기준 상대경로. 위 §7.1 처럼 같은 디렉토리에 두면
+`upload-keystore.jks` 그대로. `key.properties` 와 `*.jks` 는 `.gitignore` 로 차단되어 있다.
+
+### 7.3 Release APK 빌드
+
 ```bash
 cd flutter_app
 flutter build apk --release \
   --dart-define=API_BASE_URL=https://account.kyuhyeong.com
 ```
 
-`build/app/outputs/flutter-apk/app-release.apk` 를 단말에 설치. release signing 설정은
-별도 PR (Week 6 두 번째 PR) 에서 추가.
+산출물: `build/app/outputs/flutter-apk/app-release.apk`. 단말에 설치 후 로그인 → 거래 목록
+1회 동작 확인. Play Store Internal Track 업로드는 본 키로 서명된 APK 만 수용한다.
 
 ## 8. CI
 
