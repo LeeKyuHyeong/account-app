@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/providers/auth_provider.dart';
+import '../../summary/presentation/this_month_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -27,51 +28,51 @@ class HomeScreen extends ConsumerWidget {
         tooltip: '영수증 촬영',
         child: const Icon(Icons.camera_alt),
       ),
-      body: Center(
-        child: state.when(
-          loading: () => const CircularProgressIndicator(),
-          error: (e, _) => Text('오류: $e'),
-          data: (auth) {
-            if (auth is! Authenticated) {
-              return const Text('로그인이 필요합니다');
-            }
-            final me = auth.me;
-            final household = me.households.isNotEmpty
-                ? me.households.first
-                : null;
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('안녕하세요, ${me.name} 님',
-                      style: Theme.of(context).textTheme.headlineSmall,
-                      textAlign: TextAlign.center),
-                  const SizedBox(height: 8),
-                  Text(me.email, textAlign: TextAlign.center),
-                  if (household != null) ...[
-                    const SizedBox(height: 16),
-                    Text('가구: ${household.name} (${household.role})',
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('오류: $e')),
+        data: (auth) {
+          if (auth is! Authenticated) {
+            return const Center(child: Text('로그인이 필요합니다'));
+          }
+          final me = auth.me;
+          final household = me.households.isNotEmpty ? me.households.first : null;
+          return ListView(
+            padding: const EdgeInsets.only(top: 8, bottom: 96),
+            children: [
+              const ThisMonthCard(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('${me.name} 님',
+                        style: Theme.of(context).textTheme.titleMedium,
                         textAlign: TextAlign.center),
+                    if (household != null) ...[
+                      const SizedBox(height: 4),
+                      Text('가구 ${household.name} · ${household.role}',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () => context.push('/transactions'),
+                      icon: const Icon(Icons.list_alt),
+                      label: const Text('거래 목록'),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/transactions/new'),
+                      icon: const Icon(Icons.add),
+                      label: const Text('거래 추가'),
+                    ),
                   ],
-                  const SizedBox(height: 32),
-                  FilledButton.icon(
-                    onPressed: () => context.push('/transactions'),
-                    icon: const Icon(Icons.list_alt),
-                    label: const Text('거래 목록'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => context.push('/transactions/new'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('거래 추가'),
-                  ),
-                ],
+                ),
               ),
-            );
-          },
-        ),
+            ],
+          );
+        },
       ),
     );
   }

@@ -15,6 +15,7 @@
 Week 1: ▓▓▓▓▓▓░  Task 6 코드 통합 완료 / 통합 테스트·Acceptance 보류
 Week 2-3: ▓▓▓▓▓▓░ Flutter 로그인 + 거래 목록/입력 + 백엔드 API 완료
 Week 4:   ▓▓▓▓▓▓░ 카메라 촬영 + 1280px 압축 + 업로드 + 신뢰도 분기 컨펌 + PATCH 완료
+Week 5:   ▓▓▓░░░░ 학습 UPSERT + 월별 집계 API + 홈 카드 완료 / 배치 잡 + 차트 대기
 v1.1+:     대기
 ```
 
@@ -130,11 +131,13 @@ v1.1+:     대기
 - [x] 검증: `./gradlew test` + `flutter analyze` 0 issues + `flutter test` 1/1 + `flutter build apk --debug` OK
 
 ### Week 5. 학습 + 대시보드
-- [ ] `merchant_history` 학습 피드백 루프 (사용자 수정 시 UPSERT)
-- [ ] 홈 화면 — 이번 달 카드 (수입/지출/잉여금)
-- [ ] 카메라 FAB + 앱 아이콘 Quick Action
-- [ ] `MonthlySummary` 사전 계산 배치 잡 (`account-batch`)
-- [ ] 월별 집계 API + 카테고리별 추이 차트 (`fl_chart`)
+- [x] **`merchant_history` 학습 피드백 루프** — `MerchantHistoryService.upsert(merchant, category)` 가 가맹점명으로 lookup → exists 면 `touchUsage`, 없으면 insert. 학습 시점: 수동 입력 / PATCH 컨펌(DRAFT→CONFIRMED) / 카테고리 변경. DRAFT (영수증 자동 생성) 직후는 학습 X.
+- [x] **홈 화면 이번 달 카드** — `ThisMonthCard` 위젯 (수입/지출/잉여금 3행 + 투자 별도 표시). `currentMonthSummaryProvider` autoDispose 로 화면 진입마다 fresh fetch. 잉여금 음수면 빨강.
+- [x] 카메라 FAB (Week 4 에서 large FAB 으로 이미 완료)
+- [x] **월별 집계 API** — `GET /api/summary/monthly?yearMonth=2026-05`. `MonthlySummaryService` 가 Specification 으로 한 달치 거래만 fetch 후 메모리 집계. soft-delete 제외. 거래 0 인 카테고리도 응답에 포함 (예산 진행률 UI 대비).
+- [ ] **`MonthlySummary` 사전 계산 배치 잡 (`account-batch`)** — 다음 PR (현재는 메모리 집계로 충분)
+- [ ] **카테고리별 추이 차트 (`fl_chart`)** — 다음 PR
+- [ ] 앱 아이콘 Quick Action — Week 6 배포 시점에 같이
 
 ### Week 6. 배포
 - [ ] `account.kyuhyeong.com` 서브도메인 + nginx server block

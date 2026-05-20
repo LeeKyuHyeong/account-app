@@ -48,6 +48,7 @@ public class TransactionService {
     private final UserRepository userRepository;
     private final HouseholdRepository householdRepository;
     private final TransactionHistoryService historyService;
+    private final MerchantHistoryService merchantHistoryService;
 
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> list(TransactionListQuery query) {
@@ -87,6 +88,8 @@ public class TransactionService {
                 .build();
         tx = transactionRepository.save(tx);
         historyService.logCreate(tx, authorUserId);
+        // 수동 입력은 즉시 CONFIRMED 이므로 가맹점 학습 대상.
+        merchantHistoryService.upsert(tx.getMerchant(), tx.getCategory());
         return TransactionResponse.from(tx);
     }
 
@@ -128,6 +131,12 @@ public class TransactionService {
         }
         if (changed) {
             historyService.logUpdate(tx, before, actorUserId);
+            // PATCH 이후 상태가 CONFIRMED 면 학습 — 영수증 컨펌 흐름의 학습 진입점.
+            // (DRAFT 그대로면 학습 X. status 변경 없이 categoryId 만 바꾼 경우에도 학습 — 사용자가
+            // 명시적으로 카테고리를 수정한 것이므로.)
+            if (tx.getStatus() == TransactionStatus.CONFIRMED) {
+                merchantHistoryService.upsert(tx.getMerchant(), tx.getCategory());
+            }
         }
         return TransactionResponse.from(tx);
     }
