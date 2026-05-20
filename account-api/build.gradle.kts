@@ -19,6 +19,9 @@ dependencies {
     // ─── 모듈 간 의존 ───
     implementation(project(":account-core"))
     implementation(project(":account-ai"))
+    // account-batch 의 @Scheduled 잡들이 account-api 프로세스 안에서 같이 기동된다.
+    // 별도 프로세스로 분리하려면 본 라인을 제거하고 account-batch 에 자체 main 추가.
+    implementation(project(":account-batch"))
 
     // ─── Spring Boot ───
     implementation("org.springframework.boot:spring-boot-starter-web")

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 
 /**
  * 집계 / 통계 엔드포인트.
@@ -30,11 +31,23 @@ public class SummaryController {
     @GetMapping("/monthly")
     public MonthlySummaryResponse monthly(
             @RequestParam(required = false) String yearMonth) {
-        YearMonth target = parseYearMonth(yearMonth);
+        YearMonth target = parseYearMonth(yearMonth, "yearMonth");
         return monthlySummaryService.get(target);
     }
 
-    private YearMonth parseYearMonth(String raw) {
+    /**
+     * 시계열 — {@code from} 부터 {@code to} 미만 (반-개구간). 차트 화면에서 6개월 추이 등에 사용.
+     */
+    @GetMapping("/monthly/series")
+    public List<MonthlySummaryResponse> series(
+            @RequestParam String from,
+            @RequestParam String to) {
+        YearMonth start = parseYearMonth(from, "from");
+        YearMonth end = parseYearMonth(to, "to");
+        return monthlySummaryService.series(start, end);
+    }
+
+    private YearMonth parseYearMonth(String raw, String paramName) {
         if (raw == null || raw.isBlank()) {
             return YearMonth.now();
         }
@@ -42,7 +55,7 @@ public class SummaryController {
             return YearMonth.parse(raw);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException(
-                    "yearMonth must be in YYYY-MM format (e.g. 2026-05), got: " + raw);
+                    paramName + " must be in YYYY-MM format (e.g. 2026-05), got: " + raw);
         }
     }
 }

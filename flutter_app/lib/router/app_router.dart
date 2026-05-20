@@ -8,6 +8,7 @@ import '../features/home/presentation/home_screen.dart';
 import '../features/receipt/models/receipt_response.dart';
 import '../features/receipt/presentation/receipt_capture_screen.dart';
 import '../features/receipt/presentation/receipt_confirmation_screen.dart';
+import '../features/summary/presentation/trend_screen.dart';
 import '../features/transaction/presentation/transaction_form_screen.dart';
 import '../features/transaction/presentation/transaction_list_screen.dart';
 
@@ -73,6 +74,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           }
           return ReceiptConfirmationScreen(upload: upload);
         },
+      ),
+      GoRoute(
+        path: '/summary/trend',
+        builder: (context, state) => const TrendScreen(),
       ),
     ],
   );

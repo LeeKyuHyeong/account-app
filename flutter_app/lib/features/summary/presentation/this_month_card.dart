@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../data/summary_api.dart';
@@ -77,8 +78,18 @@ class _Content extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(monthLabel, style: theme.textTheme.titleMedium),
-        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(monthLabel, style: theme.textTheme.titleMedium),
+            TextButton.icon(
+              onPressed: () => context.push('/summary/trend'),
+              icon: const Icon(Icons.show_chart, size: 18),
+              label: const Text('추이'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
         _Row(label: '수입', value: summary.income, color: Colors.blue.shade700),
         const SizedBox(height: 8),
         _Row(label: '지출', value: summary.totalExpense, color: theme.colorScheme.onSurface),

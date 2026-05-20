@@ -44,6 +44,7 @@ dependencies:
   reactive_forms: ^18.2.2
   image_picker: ^1.2.2
   image: ^4.8.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

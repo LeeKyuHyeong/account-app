@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +43,37 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MonthlySummaryService {
 
+    /** 시계열 호출 한 번에 응답 가능한 최대 개월 수 (UI 차트가 의미있게 그릴 범위). */
+    private static final int MAX_SERIES_MONTHS = 24;
+
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
+
+    /**
+     * 시계열 합계 — {@code from} 부터 {@code to} 미만까지 (반-개구간). 차트 화면에서 6개월
+     * 추이 등을 한 번에 요청하기 위함. 현재는 단순 루프로 {@link #get} 을 N 번 호출 —
+     * 배치 잡이 {@code monthly_summaries} 를 채우기 시작하면 그 테이블 우선 조회로 전환.
+     */
+    @Transactional(readOnly = true)
+    public List<MonthlySummaryResponse> series(YearMonth from, YearMonth to) {
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("from / to are required");
+        }
+        if (!from.isBefore(to)) {
+            throw new IllegalArgumentException(
+                    "from (" + from + ") must be before to (" + to + "), to is exclusive");
+        }
+        long months = java.time.temporal.ChronoUnit.MONTHS.between(from, to);
+        if (months > MAX_SERIES_MONTHS) {
+            throw new IllegalArgumentException(
+                    "series range exceeds " + MAX_SERIES_MONTHS + " months: " + months);
+        }
+        List<MonthlySummaryResponse> result = new ArrayList<>((int) months);
+        for (YearMonth ym = from; ym.isBefore(to); ym = ym.plusMonths(1)) {
+            result.add(get(ym));
+        }
+        return result;
+    }
 
     @Transactional(readOnly = true)
     public MonthlySummaryResponse get(YearMonth yearMonth) {
@@ -69,7 +99,7 @@ public class MonthlySummaryService {
         BigDecimal expenseVariable = BigDecimal.ZERO;
         BigDecimal invest = BigDecimal.ZERO;
 
-        List<CategoryAmount> byCategory = new java.util.ArrayList<>(categories.size());
+        List<CategoryAmount> byCategory = new ArrayList<>(categories.size());
         for (Category c : categories) {
             BigDecimal sum = sumByCategoryId.getOrDefault(c.getId(), BigDecimal.ZERO);
             byCategory.add(new CategoryAmount(

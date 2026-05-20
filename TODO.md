@@ -15,7 +15,7 @@
 Week 1: ▓▓▓▓▓▓░  Task 6 코드 통합 완료 / 통합 테스트·Acceptance 보류
 Week 2-3: ▓▓▓▓▓▓░ Flutter 로그인 + 거래 목록/입력 + 백엔드 API 완료
 Week 4:   ▓▓▓▓▓▓░ 카메라 촬영 + 1280px 압축 + 업로드 + 신뢰도 분기 컨펌 + PATCH 완료
-Week 5:   ▓▓▓░░░░ 학습 UPSERT + 월별 집계 API + 홈 카드 완료 / 배치 잡 + 차트 대기
+Week 5:   ▓▓▓▓▓▓░ 학습 UPSERT + 월별 집계 + 홈 카드 + 배치 잡 + 시계열 + 추이 차트 완료
 v1.1+:     대기
 ```
 
@@ -135,8 +135,8 @@ v1.1+:     대기
 - [x] **홈 화면 이번 달 카드** — `ThisMonthCard` 위젯 (수입/지출/잉여금 3행 + 투자 별도 표시). `currentMonthSummaryProvider` autoDispose 로 화면 진입마다 fresh fetch. 잉여금 음수면 빨강.
 - [x] 카메라 FAB (Week 4 에서 large FAB 으로 이미 완료)
 - [x] **월별 집계 API** — `GET /api/summary/monthly?yearMonth=2026-05`. `MonthlySummaryService` 가 Specification 으로 한 달치 거래만 fetch 후 메모리 집계. soft-delete 제외. 거래 0 인 카테고리도 응답에 포함 (예산 진행률 UI 대비).
-- [ ] **`MonthlySummary` 사전 계산 배치 잡 (`account-batch`)** — 다음 PR (현재는 메모리 집계로 충분)
-- [ ] **카테고리별 추이 차트 (`fl_chart`)** — 다음 PR
+- [x] **`MonthlySummary` 사전 계산 배치 잡 (`account-batch`)** — `MonthlySummaryJob` (`@Scheduled` cron 매월 1일 03:00 KST, Asia/Seoul) → `MonthlyAggregationService` 가 가구별 트랜잭션으로 직전 월 집계 후 `monthly_summaries` UPSERT. account-api 가 batch 모듈 의존해서 단일 프로세스로 같이 기동 (`@EnableScheduling`).
+- [x] **시계열 API + 추이 차트 (`fl_chart`)** — `GET /api/summary/monthly/series?from=YYYY-MM&to=YYYY-MM` (최대 24개월). Flutter `TrendScreen` 에서 최근 6개월 라인 차트 (수입/지출/잉여 3선, y축 만원 단위). 홈 카드 우상단 "추이" 버튼에서 진입.
 - [ ] 앱 아이콘 Quick Action — Week 6 배포 시점에 같이
 
 ### Week 6. 배포
