@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/networth/presentation/networth_form_screen.dart';
+import '../features/networth/presentation/networth_screen.dart';
 import '../features/receipt/models/receipt_response.dart';
 import '../features/receipt/presentation/receipt_capture_screen.dart';
 import '../features/receipt/presentation/receipt_confirmation_screen.dart';
@@ -78,6 +80,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/summary/trend',
         builder: (context, state) => const TrendScreen(),
+      ),
+      GoRoute(
+        path: '/networth',
+        builder: (context, state) => const NetWorthScreen(),
+      ),
+      GoRoute(
+        path: '/networth/form',
+        builder: (context, state) {
+          final args = state.extra as NetWorthFormArgs?;
+          if (args == null) {
+            // extra 누락 시 안전망 — 목록으로 되돌린다.
+            return const NetWorthScreen();
+          }
+          return NetWorthFormScreen(args: args);
+        },
       ),
     ],
   );

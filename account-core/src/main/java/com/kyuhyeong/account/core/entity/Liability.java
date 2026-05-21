@@ -56,4 +56,12 @@ public class Liability {
 
     @Column(name = "recorded_at", nullable = false)
     private LocalDate recordedAt;
+
+    /** {@link Asset#edit} 와 동일 — 가구/id 외 필드를 부분 갱신. */
+    public void edit(String name, String type, BigDecimal balance, LocalDate recordedAt) {
+        if (name != null) this.name = name;
+        if (type != null) this.type = type;
+        if (balance != null) this.balance = balance;
+        if (recordedAt != null) this.recordedAt = recordedAt;
+    }
 }

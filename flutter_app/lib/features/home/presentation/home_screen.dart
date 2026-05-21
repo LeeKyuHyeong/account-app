@@ -67,6 +67,12 @@ class HomeScreen extends ConsumerWidget {
                       icon: const Icon(Icons.add),
                       label: const Text('거래 추가'),
                     ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => context.push('/networth'),
+                      icon: const Icon(Icons.account_balance_wallet_outlined),
+                      label: const Text('순자산'),
+                    ),
                   ],
                 ),
               ),

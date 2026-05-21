@@ -154,7 +154,7 @@ v1.1+:     대기
 ---
 
 ## P2 — v1.1 (MVP 후 점진)
-- [ ] 순자산 화면 (자산/부채 + 월별 추이)
+- [~] 순자산 화면 (자산/부채 + 월별 추이) — Backend CRUD + 스냅샷 API + Flutter 입력 화면 완료. **월별 추이 차트는 다음 PR** (history API + fl_chart 신규 화면 + 홈 카드 진입).
 - [ ] 결혼 일시 지출 화면 (예산 vs 실제, 부모 지원 분리)
 - [ ] FCM 푸시 (silent push 동기화 + 알림) — Firebase Admin SDK
 - [ ] 예산 초과 경고

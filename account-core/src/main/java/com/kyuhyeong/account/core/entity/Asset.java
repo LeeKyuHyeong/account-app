@@ -57,4 +57,15 @@ public class Asset {
 
     @Column(name = "recorded_at", nullable = false)
     private LocalDate recordedAt;
+
+    /**
+     * 사용자 편집 — 가구 / id 외 모든 필드 일괄 갱신. null 인 필드는 변경하지 않는다.
+     * PATCH 흐름의 partial update 를 단일 진입점으로 받기 위한 것 — v1.1 단순 모델.
+     */
+    public void edit(String name, String type, BigDecimal balance, LocalDate recordedAt) {
+        if (name != null) this.name = name;
+        if (type != null) this.type = type;
+        if (balance != null) this.balance = balance;
+        if (recordedAt != null) this.recordedAt = recordedAt;
+    }
 }
