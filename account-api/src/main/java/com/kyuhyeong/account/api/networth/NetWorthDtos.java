@@ -92,4 +92,13 @@ public final class NetWorthDtos {
             List<LiabilityResponse> liabilities
     ) {
     }
+
+    /** 추이 차트용 — 한 달치 합계만 (자산/부채 항목 리스트는 제외). */
+    public record HistoryPoint(
+            String yearMonth,
+            BigDecimal assetsTotal,
+            BigDecimal liabilitiesTotal,
+            BigDecimal netWorth
+    ) {
+    }
 }

@@ -29,6 +29,11 @@ class NetWorthScreen extends ConsumerWidget {
         title: const Text('순자산'),
         actions: [
           IconButton(
+            tooltip: '추이',
+            icon: const Icon(Icons.show_chart),
+            onPressed: () => context.push('/networth/trend'),
+          ),
+          IconButton(
             tooltip: '월 변경',
             icon: const Icon(Icons.calendar_month),
             onPressed: () => _pickMonth(context, ref, async),

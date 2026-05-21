@@ -7,6 +7,7 @@ import '../features/auth/providers/auth_provider.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/networth/presentation/networth_form_screen.dart';
 import '../features/networth/presentation/networth_screen.dart';
+import '../features/networth/presentation/networth_trend_screen.dart';
 import '../features/receipt/models/receipt_response.dart';
 import '../features/receipt/presentation/receipt_capture_screen.dart';
 import '../features/receipt/presentation/receipt_confirmation_screen.dart';
@@ -95,6 +96,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           }
           return NetWorthFormScreen(args: args);
         },
+      ),
+      GoRoute(
+        path: '/networth/trend',
+        builder: (context, state) => const NetWorthTrendScreen(),
       ),
     ],
   );

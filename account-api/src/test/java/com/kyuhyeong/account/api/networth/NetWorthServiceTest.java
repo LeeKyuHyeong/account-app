@@ -185,6 +185,55 @@ class NetWorthServiceTest {
     }
 
     @Test
+    @DisplayName("history: from~to 미포함 구간을 월별로 합계 — 3개월")
+    void historyReturnsPerMonthTotals() {
+        // 2026-03 자산만 / 2026-04 부채만 / 2026-05 둘 다 — 가지각색 케이스. Mockito thenReturn
+        // 체이닝은 호출 횟수 순서대로 다른 응답을 돌려준다.
+        when(assetRepository.findAll(any(Specification.class)))
+                .thenReturn(List.of(assetWith(1L, "예금", new BigDecimal("1000000"))))   // 2026-03
+                .thenReturn(List.of())                                                       // 2026-04
+                .thenReturn(List.of(assetWith(2L, "주식", new BigDecimal("2500000"))));  // 2026-05
+        when(liabilityRepository.findAll(any(Specification.class)))
+                .thenReturn(List.of())                                                          // 2026-03
+                .thenReturn(List.of(liabilityWith(10L, "카드", new BigDecimal("300000"))))  // 2026-04
+                .thenReturn(List.of(liabilityWith(11L, "대출", new BigDecimal("500000"))));// 2026-05
+
+        var points = service.history(YearMonth.of(2026, 3), YearMonth.of(2026, 6));
+
+        assertThat(points).hasSize(3);
+        assertThat(points.get(0).yearMonth()).isEqualTo("2026-03");
+        assertThat(points.get(0).assetsTotal()).isEqualByComparingTo("1000000");
+        assertThat(points.get(0).liabilitiesTotal()).isEqualByComparingTo("0");
+        assertThat(points.get(0).netWorth()).isEqualByComparingTo("1000000");
+
+        assertThat(points.get(1).yearMonth()).isEqualTo("2026-04");
+        assertThat(points.get(1).assetsTotal()).isEqualByComparingTo("0");
+        assertThat(points.get(1).liabilitiesTotal()).isEqualByComparingTo("300000");
+        assertThat(points.get(1).netWorth()).isEqualByComparingTo("-300000");
+
+        assertThat(points.get(2).yearMonth()).isEqualTo("2026-05");
+        assertThat(points.get(2).assetsTotal()).isEqualByComparingTo("2500000");
+        assertThat(points.get(2).liabilitiesTotal()).isEqualByComparingTo("500000");
+        assertThat(points.get(2).netWorth()).isEqualByComparingTo("2000000");
+    }
+
+    @Test
+    @DisplayName("history: from >= to 면 IllegalArgumentException")
+    void historyRejectsInvertedRange() {
+        assertThatThrownBy(() -> service.history(YearMonth.of(2026, 5), YearMonth.of(2026, 5)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must be before");
+    }
+
+    @Test
+    @DisplayName("history: 24개월 초과 요청은 IllegalArgumentException")
+    void historyRejectsTooLongRange() {
+        assertThatThrownBy(() -> service.history(YearMonth.of(2024, 1), YearMonth.of(2026, 2)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("24 months");
+    }
+
+    @Test
     @DisplayName("yearMonth 형식 오류는 IllegalArgumentException + 메시지에 입력값 포함")
     void yearMonthParseFails() {
         assertThatThrownBy(() -> NetWorthService.parseYearMonth("2026/05"))

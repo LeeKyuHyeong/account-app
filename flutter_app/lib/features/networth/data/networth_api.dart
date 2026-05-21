@@ -20,6 +20,21 @@ class NetWorthApi {
     return NetWorthSnapshot.fromJson(res.data!);
   }
 
+  /// 추이 — from(포함) ~ to(미포함), 최대 24개월.
+  Future<List<NetWorthHistoryPoint>> history({
+    required String from,
+    required String to,
+  }) async {
+    final res = await _dio.get<List<dynamic>>(
+      '/api/networth/history',
+      queryParameters: {'from': from, 'to': to},
+    );
+    return res.data!
+        .cast<Map<String, dynamic>>()
+        .map(NetWorthHistoryPoint.fromJson)
+        .toList();
+  }
+
   Future<AssetItem> createAsset({
     required String name,
     required String type,
@@ -115,4 +130,16 @@ final netWorthSnapshotProvider =
     FutureProvider.autoDispose<NetWorthSnapshot>((ref) {
   final ym = ref.watch(selectedYearMonthProvider);
   return ref.read(netWorthApiProvider).snapshot(yearMonth: ym);
+});
+
+/// 최근 12개월 추이 (현재 월 포함). 차트 화면 진입 시마다 fresh fetch.
+final netWorthHistoryProvider =
+    FutureProvider.autoDispose<List<NetWorthHistoryPoint>>((ref) {
+  final now = DateTime.now();
+  // from = 11개월 전 (포함), to = 다음 달 1일 (미포함) → 정확히 12개월.
+  final fromYm = DateTime(now.year, now.month - 11);
+  final toYm = DateTime(now.year, now.month + 1);
+  String fmt(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}';
+  return ref.read(netWorthApiProvider).history(from: fmt(fromYm), to: fmt(toYm));
 });

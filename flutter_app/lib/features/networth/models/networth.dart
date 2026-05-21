@@ -89,3 +89,27 @@ class NetWorthSnapshot {
 
 /// 자산 / 부채 구분 — 폼 화면이 두 종류를 한 위젯으로 다루기 위한 열거형.
 enum NetWorthKind { asset, liability }
+
+/// 차트용 — 한 달치 합계만.
+class NetWorthHistoryPoint {
+  const NetWorthHistoryPoint({
+    required this.yearMonth,
+    required this.assetsTotal,
+    required this.liabilitiesTotal,
+    required this.netWorth,
+  });
+
+  factory NetWorthHistoryPoint.fromJson(Map<String, dynamic> json) {
+    return NetWorthHistoryPoint(
+      yearMonth: json['yearMonth'] as String,
+      assetsTotal: (json['assetsTotal'] as num).toDouble(),
+      liabilitiesTotal: (json['liabilitiesTotal'] as num).toDouble(),
+      netWorth: (json['netWorth'] as num).toDouble(),
+    );
+  }
+
+  final String yearMonth;
+  final double assetsTotal;
+  final double liabilitiesTotal;
+  final double netWorth;
+}

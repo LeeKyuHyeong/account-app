@@ -2,6 +2,7 @@ package com.kyuhyeong.account.api.networth;
 
 import com.kyuhyeong.account.api.networth.NetWorthDtos.AssetResponse;
 import com.kyuhyeong.account.api.networth.NetWorthDtos.CreateRequest;
+import com.kyuhyeong.account.api.networth.NetWorthDtos.HistoryPoint;
 import com.kyuhyeong.account.api.networth.NetWorthDtos.LiabilityResponse;
 import com.kyuhyeong.account.api.networth.NetWorthDtos.SnapshotResponse;
 import com.kyuhyeong.account.api.networth.NetWorthDtos.UpdateRequest;
@@ -21,6 +22,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -34,6 +37,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class NetWorthService {
+
+    /** 추이 호출 한 번에 응답 가능한 최대 개월 수 (UI 차트가 의미있게 그릴 범위). */
+    private static final int MAX_HISTORY_MONTHS = 24;
 
     private final AssetRepository assetRepository;
     private final LiabilityRepository liabilityRepository;
@@ -64,6 +70,39 @@ public class NetWorthService {
                 assetsTotal, liabilitiesTotal, netWorth,
                 assetItems, liabilityItems
         );
+    }
+
+    /**
+     * 월별 합계 추이 — {@code from} 부터 {@code to} 미만까지 (반-개구간). 차트용으로 항목
+     * 리스트는 제외하고 합계만. {@link MonthlySummaryService#series} 와 동일한 호출 패턴이다 —
+     * 한 달치 합계를 N 번 조회 (매 호출이 2 쿼리). 자산/부채 row 수가 작아 (~수십) 충분.
+     */
+    @Transactional(readOnly = true)
+    public List<HistoryPoint> history(YearMonth from, YearMonth to) {
+        if (from == null || to == null) {
+            throw new IllegalArgumentException("from / to are required");
+        }
+        if (!from.isBefore(to)) {
+            throw new IllegalArgumentException(
+                    "from (" + from + ") must be before to (" + to + "), to is exclusive");
+        }
+        long months = ChronoUnit.MONTHS.between(from, to);
+        if (months > MAX_HISTORY_MONTHS) {
+            throw new IllegalArgumentException(
+                    "history range exceeds " + MAX_HISTORY_MONTHS + " months: " + months);
+        }
+        List<HistoryPoint> result = new ArrayList<>((int) months);
+        for (YearMonth ym = from; ym.isBefore(to); ym = ym.plusMonths(1)) {
+            LocalDate recordedAt = ym.atDay(1);
+            BigDecimal a = sum(
+                    assetRepository.findAll(monthMatches("recordedAt", recordedAt)),
+                    Asset::getBalance);
+            BigDecimal l = sum(
+                    liabilityRepository.findAll(monthMatches("recordedAt", recordedAt)),
+                    Liability::getBalance);
+            result.add(new HistoryPoint(ym.toString(), a, l, a.subtract(l)));
+        }
+        return result;
     }
 
     @Transactional
