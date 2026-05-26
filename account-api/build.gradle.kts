@@ -27,6 +27,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    // SSR (Thymeleaf) — /web/** 라우트에서 사용. /api/** 는 기존 JSON 컨트롤러 유지.
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+    // Thymeleaf 템플릿에서 sec:authorize / sec:authentication 사용.
+    implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+    // Bootstrap 5 (CSS/JS) — webjar 로 번들. /webjars/bootstrap/5.3.3/... 경로로 서빙.
+    implementation("org.webjars:bootstrap:5.3.3")
+    implementation("org.webjars:webjars-locator-core")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     // account-core 의 JPA starter 가 implementation 스코프라 jakarta.persistence /
     // @Transactional / JpaRepository 등이 컴파일 노출 안 됨. account-api 도 controller /

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+  <div class="container">
+    <a class="navbar-brand" th:href="@{/web/home}">가계부</a>
+    <div class="ms-auto" sec:authorize="isAuthenticated()">
+      <span class="me-3 text-muted small" sec:authentication="principal.email">user@example.com</span>
+      <form th:action="@{/logout}" method="post" class="d-inline">
+        <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>
+      </form>
+    </div>
+  </div>
+</nav>
+</body>
+</html>
