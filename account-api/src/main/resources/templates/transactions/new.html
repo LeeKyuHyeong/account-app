@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{fragments/layout :: page('거래 입력', ~{::content})}">
+  <th:block th:fragment="content">
+
+    <h1 class="h5 mb-3">거래 입력</h1>
+
+    <!-- form / errors 는 Map. 없는 키에서 예외가 나지 않도록 대괄호 인덱서로 접근. -->
+    <form method="post" th:action="@{/web/transactions/new}">
+      <div class="mb-3">
+        <label class="form-label">카테고리</label>
+        <select name="categoryId" class="form-select"
+                th:classappend="${errors['categoryId']} ? 'is-invalid' : ''">
+          <option value="">선택하세요</option>
+          <option th:each="c : ${categories}" th:value="${c.id}" th:text="|${c.name} (${c.type})|"
+                  th:selected="${form['categoryId'] != null and form['categoryId'] == #strings.toString(c.id)}"></option>
+        </select>
+        <div class="invalid-feedback d-block" th:if="${errors['categoryId']}" th:text="${errors['categoryId']}"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">금액 (원)</label>
+        <input type="number" step="0.01" name="amount" class="form-control"
+               th:classappend="${errors['amount']} ? 'is-invalid' : ''" th:value="${form['amount']}">
+        <div class="invalid-feedback d-block" th:if="${errors['amount']}" th:text="${errors['amount']}"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">일시</label>
+        <input type="datetime-local" name="occurredAt" class="form-control"
+               th:classappend="${errors['occurredAt']} ? 'is-invalid' : ''"
+               th:value="${form['occurredAt']} ?: ${defaultOccurredAt}">
+        <div class="invalid-feedback d-block" th:if="${errors['occurredAt']}" th:text="${errors['occurredAt']}"></div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">상점 <span class="text-muted small">(선택)</span></label>
+        <input type="text" name="merchant" class="form-control" th:value="${form['merchant']}">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">결제수단 <span class="text-muted small">(선택)</span></label>
+        <input type="text" name="paymentMethod" class="form-control" th:value="${form['paymentMethod']}">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">메모 <span class="text-muted small">(선택)</span></label>
+        <textarea name="memo" class="form-control" rows="2" th:text="${form['memo']}"></textarea>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a th:href="@{/web/transactions}" class="btn btn-outline-secondary">취소</a>
+      </div>
+    </form>
+
+  </th:block>
+</th:block>
+</body>
+</html>

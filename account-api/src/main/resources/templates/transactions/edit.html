@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{fragments/layout :: page('거래 수정', ~{::content})}">
+  <th:block th:fragment="content">
+
+    <h1 class="h5 mb-3">거래 수정</h1>
+
+    <div class="card mb-3">
+      <div class="card-body small">
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted">금액</span>
+          <span th:text="${#numbers.formatInteger(tx.amount, 0, 'COMMA')} + '원'">0원</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted">일시</span>
+          <span th:text="${#temporals.format(tx.occurredAt, 'yyyy-MM-dd HH:mm')}">-</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted">상점</span>
+          <span th:text="${tx.merchant} ?: '-'">-</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted">상태</span>
+          <span th:text="${tx.status}">DRAFT</span>
+        </div>
+      </div>
+    </div>
+
+    <form method="post" th:action="@{/web/transactions/{id}(id=${tx.id})}">
+      <div class="mb-3">
+        <label class="form-label">카테고리</label>
+        <select name="categoryId" class="form-select">
+          <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                  th:selected="${c.id == tx.categoryId}"></option>
+        </select>
+      </div>
+
+      <div class="form-check mb-3" th:if="${tx.status.name() == 'DRAFT'}">
+        <input class="form-check-input" type="checkbox" name="confirm" value="true" id="confirm">
+        <label class="form-check-label" for="confirm">이 거래를 확정 (CONFIRMED)</label>
+      </div>
+
+      <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">저장</button>
+        <a th:href="@{/web/transactions}" class="btn btn-outline-secondary">취소</a>
+      </div>
+    </form>
+
+  </th:block>
+</th:block>
+</body>
+</html>

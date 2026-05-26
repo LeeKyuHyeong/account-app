@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{fragments/layout :: page('홈', ~{::content})}">
+  <th:block th:fragment="content">
+
+    <div th:if="${!overBudget.isEmpty()}" class="alert alert-warning py-2">
+      <strong th:text="${overBudget.size()}">0</strong>개 카테고리가 예산을 초과했습니다 —
+      <span th:text="${#strings.listJoin(overBudget.![name], ', ')}">식비</span>
+    </div>
+
+    <h1 class="h5 mb-3" th:text="${monthLabel} + ' 요약'">2026년 5월 요약</h1>
+
+    <div class="card mb-3">
+      <div class="list-group list-group-flush">
+        <div class="list-group-item d-flex justify-content-between">
+          <span class="text-muted">수입</span>
+          <span th:text="${#numbers.formatInteger(summary.income, 0, 'COMMA')} + '원'">0원</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between">
+          <span class="text-muted">지출 (고정+변동)</span>
+          <span th:text="${#numbers.formatInteger(summary.totalExpense, 0, 'COMMA')} + '원'">0원</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between fw-semibold">
+          <span>잉여금</span>
+          <span th:classappend="${summary.surplus.signum() < 0} ? 'text-danger' : 'text-success'"
+                th:text="${#numbers.formatInteger(summary.surplus, 0, 'COMMA')} + '원'">0원</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between">
+          <span class="text-muted">투자/저축</span>
+          <span th:text="${#numbers.formatInteger(summary.invest, 0, 'COMMA')} + '원'">0원</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <a th:href="@{/web/transactions}" class="btn btn-outline-primary">거래 목록</a>
+      <a th:href="@{/web/transactions/new}" class="btn btn-primary">거래 입력</a>
+    </div>
+
+  </th:block>
+</th:block>
+</body>
+</html>

@@ -75,8 +75,7 @@ public class SecurityConfig {
                         .loginProcessingUrl("/login")
                         .usernameParameter("email")
                         .passwordParameter("password")
-                        // PR1 검증용 — Task #4 에서 /web/home 으로 교체.
-                        .defaultSuccessUrl("/web/ping", true)
+                        .defaultSuccessUrl("/web/home", true)
                         .failureUrl("/login?error")
                         .permitAll())
                 .logout(logout -> logout

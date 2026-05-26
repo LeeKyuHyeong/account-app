@@ -64,6 +64,31 @@ public class TransactionService {
         return PageResponse.of(page.map(TransactionResponse::from));
     }
 
+    /** 단건 조회 — 웹 수정 화면 진입용. soft-delete 된 거래는 없는 것으로 취급. */
+    @Transactional(readOnly = true)
+    public TransactionResponse get(Long id) {
+        Transaction tx = findOwnedById(id);
+        if (tx.getDeletedAt() != null) {
+            throw new IllegalArgumentException(
+                    "Transaction not found or not in current household: " + id);
+        }
+        return TransactionResponse.from(tx);
+    }
+
+    /**
+     * id 단건 조회. <b>{@link org.springframework.data.jpa.repository.JpaSpecificationExecutor#findOne}
+     * (criteria 쿼리) 를 쓴다 — Hibernate {@code @Filter} 는 PK 직접 로드
+     * ({@code JpaRepository.findById} = {@code EntityManager.find}) 에는 적용되지 않아 다른 가구의
+     * 거래도 그대로 로드되어 가구 격리가 새기 때문</b>. criteria 쿼리에는 householdFilter 가
+     * 자동 적용되어 다른 가구 거래는 0건이 된다.
+     */
+    private Transaction findOwnedById(Long id) {
+        return transactionRepository.findOne(
+                        (root, cq, cb) -> cb.equal(root.get("id"), id))
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Transaction not found or not in current household: " + id));
+    }
+
     @Transactional
     public TransactionResponse create(CreateTransactionRequest request, Long authorUserId) {
         Category category = categoryRepository.findById(request.categoryId())
@@ -102,9 +127,9 @@ public class TransactionService {
      */
     @Transactional
     public TransactionResponse update(Long id, UpdateTransactionRequest request, Long actorUserId) {
-        Transaction tx = transactionRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Transaction not found or not in current household: " + id));
+        // findOwnedById = criteria 쿼리 (householdFilter 적용). findById 는 PK 직접 로드라
+        // 필터가 안 걸려 다른 가구 거래도 수정 가능해지는 격리 누수가 있었다.
+        Transaction tx = findOwnedById(id);
         if (tx.getDeletedAt() != null) {
             throw new IllegalArgumentException("Cannot update deleted transaction: " + id);
         }
