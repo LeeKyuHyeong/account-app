@@ -1,6 +1,7 @@
 package com.kyuhyeong.account.ai.client;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.kyuhyeong.account.ai.config.ClaudeProperties;
 import org.slf4j.Logger;
@@ -134,10 +135,13 @@ public class ClaudeVisionClient {
     /**
      * content 블록 (이미지 또는 텍스트). Anthropic은 두 타입을 모두 한 배열에 담는다.
      *
-     * <p>image 블록은 source 필드만, text 블록은 text 필드만 사용 — Jackson은 null 필드를
-     * 직렬화 시 제외하므로 한 record로 통합해도 안전.
+     * <p>image 블록은 source 만, text 블록은 text 만 보내야 한다. Jackson 기본값은 null 필드도
+     * 직렬화하므로 — 과거 이 가정이 틀려 image 블록에 {@code "text":null} 이 섞여 Anthropic 이
+     * 400 ("Extra inputs are not permitted") 으로 거부했다 — {@code @JsonInclude(NON_NULL)} 로
+     * null 필드를 직렬화에서 제외한다. (package-private: 직렬화 회귀 테스트가 접근.)
      */
-    private record ContentBlockParam(
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ContentBlockParam(
             @JsonProperty("type") String type,
             @JsonProperty("source") ImageSource source,
             @JsonProperty("text") String text
@@ -152,7 +156,7 @@ public class ClaudeVisionClient {
     }
 
     /** 이미지 소스 — base64 인코딩 방식만 사용 (URL 방식은 본 프로젝트에서 불필요). */
-    private record ImageSource(
+    record ImageSource(
             @JsonProperty("type") String type,
             @JsonProperty("media_type") String mediaType,
             @JsonProperty("data") String data

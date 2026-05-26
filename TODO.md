@@ -23,7 +23,7 @@
 ```
 M0 기반:    ▓▓▓▓▓▓▓  레이아웃 + app.css + 에러페이지 완료
 M1 핵심:    ▓▓▓▓▓▓▓  홈 + 거래 목록/입력/수정 완료 (findById 격리 누수 수정 포함)
-M2 영수증:  ▓▓▓▓▓▓░  업로드/검증/컨펌 화면 완료 / 실제 Claude 분석 happy-path 는 사용자 수동 검증
+M2 영수증:  ▓▓▓▓▓▓▓  업로드 → 실제 Claude 분석 → 컨펌까지 수동 검증 완료
 M3 대시보드:▓▓▓▓▓▓░  추이/예산/순자산 완료 (순자산 편집 유예) + 순자산 findById 격리 누수 수정
 M4 정리:    ░░░░░░░  apiChain/flutter_app 제거 + 문서 최신화 (전체 완료 후)
 ```
@@ -78,7 +78,9 @@ M4 정리:    ░░░░░░░  apiChain/flutter_app 제거 + 문서 최신
 - [x] **분석 → 컨펌** (`POST /web/receipts`) — `ReceiptIngestionService.ingest` 재사용 → DRAFT 생성 → `receipts/confirm.html` 렌더. 검증 실패/`AnalysisException` 시 폼 재렌더(에러 표시)
 - [x] 신뢰도 분기 UI — ≥0.8 success / 0.5~0.8 warning / <0.5 danger banner. <0.5 는 카테고리 변경 전 확정 버튼 비활성(최소 JS)
 - [x] 컨펌 → **기존 `POST /web/transactions/{id}`(update, confirm=true) 재사용** (별도 엔드포인트 X) → DRAFT→CONFIRMED → 목록 리다이렉트
-- 검증: ✅ 업로드 폼, 비이미지 거부(멀티파트+CSRF+검증+에러 재렌더), 컨펌 3개 신뢰도 분기 렌더(임시 프리뷰 라우트로 확인 후 제거). ⏸️ **실제 영수증 + Claude 키 happy-path 는 유료라 사용자 수동 검증** (업로드→DRAFT→컨펌→CONFIRMED)
+- [x] **🐛 Claude 호출 직렬화 버그 수정**: `ClaudeVisionClient` 의 image content 블록에 `"text":null` 이 섞여 나가 Anthropic 400("Extra inputs are not permitted"). content 블록 record 에 `@JsonInclude(NON_NULL)` 적용 + 직렬화 회귀 테스트. (실제 Claude 호출이 이번이 처음이라 그동안 미발견)
+- 검증: ✅ 업로드 폼, 비이미지 거부(멀티파트+CSRF+검증+에러 재렌더), 컨펌 3개 신뢰도 분기. ✅ **실제 영수증 happy-path 수동 검증 완료** (업로드 → Claude 분석(신뢰도 75% → 확인 banner) → 컨펌). 인코딩 정상 (Claude raw JSON = DB = 표시 일치; 한글 OCR 오독은 모델 정확도 이슈, 코드 무관)
+- [ ] **(후속) 컨펌/수정 화면에서 금액·상점·일시 편집 불가** — OCR 오독 시 카테고리만 수정 가능. 전체 편집은 `UpdateTransactionRequest` 확장 + 편집 폼 필요 (실사용 테스트에서 발견)
 
 ## P1 — M3. 대시보드
 
