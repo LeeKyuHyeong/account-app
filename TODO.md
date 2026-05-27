@@ -112,6 +112,27 @@ M4 정리:    ▓▓▓▓▓▓▓  apiChain/JWT/REST/flutter_app 제거 완료
 
 ---
 
+## 이어서 — SSR 이후 (기능 / 운영 후속)
+
+> M0~M4(마이그레이션)는 완료. 2026-05-27 운영 배포(account.kyuhyeong.com, 호스트 8085) + CI/CD(GitHub Actions: ci.yml 빌드·테스트 / deploy.yml SSH 배포) 가동. 아래는 그 이후 백로그.
+
+### 기능
+- [ ] **관리자 페이지** (`/web/admin/**`, OWNER 전용) — 사용자 / 가구 / 비밀번호를 UI 로 관리
+  - 동기: 현재 사용자·비번·테스트데이터 정리가 전부 raw SQL 이라 운영 시 위험·번거로움 ([`data-cleaning.md`](data-cleaning.md) 참조). 이를 UI 로 대체.
+  - 범위(초안): 가구 멤버 목록·역할 표시 / 사용자 비밀번호 재설정 / (선택) 시드·테스트 데이터 정리 액션.
+  - 권한: 세션 role=OWNER 만 접근 — `SecurityConfig.authorizeHttpRequests` 에 `/web/admin/**` → `hasRole("OWNER")` 추가.
+  - ⚠ **MVP 범위 확장**: `docs/account.md` §11 의 "OWNER/MEMBER 권한 차등" · "회원가입/초대 UI" 는 v1.5+ 유예 항목 → 착수 전 scope 정합 확인.
+
+### 운영 (1회성 / 상시)
+- [ ] **운영 DB 데이터 클리닝** — dev 시드(테스트가구 + 약한 비번 계정) 제거. 절차: [`data-cleaning.md`](data-cleaning.md). ⚠ **아직 미적용.**
+- [x] owner1 운영 비밀번호 변경 (dev1234! → 강한 값)
+- [ ] member1(user 2) 비번 변경 또는 삭제 — `data-cleaning.md` §2
+- [ ] **root 비밀번호 SSH 차단** — 키 로그인 확립됨 → `/etc/ssh/sshd_config` 에 `PasswordAuthentication no` (키 검증 후에만)
+- [ ] (선택) GitHub `production` 환경에 Required reviewer 등록 → deploy 승인 게이트 활성화
+- [ ] (선택) DBeaver 운영 DB 접근 — mariadb 를 `127.0.0.1:3316` 로 노출 (`docker-compose.prod.yml`, SSH 터널 전용)
+
+---
+
 ## 상시 / 가로지르는 항목
 
 ### 보안 / 시크릿 (모든 커밋 전)
