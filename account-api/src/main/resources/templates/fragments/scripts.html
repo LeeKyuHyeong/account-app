@@ -3,6 +3,23 @@
 <body>
 <th:block th:fragment="scripts">
   <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+  <!--
+    테마 토글 핸들러 — navbar 의 #themeToggle 버튼 클릭 시 라이트↔다크 전환 + localStorage 저장.
+    버튼이 없는 페이지(login/error 처럼 navbar 미사용)에서는 getElementById 가 null 이라 안전하게 no-op.
+    FOUC 방지용 초기 attribute 설정은 fragments/head.html 의 stylesheet 앞 inline script 가 담당.
+  -->
+  <script>
+    (function () {
+      var btn = document.getElementById('themeToggle');
+      if (!btn) { return; }
+      btn.addEventListener('click', function () {
+        var current = document.documentElement.getAttribute('data-bs-theme') || 'light';
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', next);
+        try { localStorage.setItem('account-theme', next); } catch (e) { /* 차단 환경 무시 */ }
+      });
+    })();
+  </script>
 </th:block>
 </body>
 </html>

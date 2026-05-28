@@ -2,15 +2,65 @@
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav th:fragment="navbar" class="navbar bg-body-tertiary border-bottom">
+<!--
+  반응형 navbar — md(768px) 이상: 풀-가로 / 미만: 햄버거 토글.
+  Bootstrap 의 collapse 동작은 webjars/bootstrap.bundle.min.js 가 담당 (fragments/scripts.html 로딩).
+  sec:authorize 는 layout fragment 가 인증 페이지에서만 사용되므로 사실상 항상 true 지만,
+  layout 외 다른 곳에서 이 fragment 가 끼어들어도 안전하도록 방어적으로 둔다.
+
+  active 표시: currentUri (ViewContextAdvice 가 모델 주입) 가 해당 섹션 prefix 로 시작하면
+  nav-link 에 'active' + aria-current='page'. 브랜드 "가계부" 는 active 처리 안 함.
+-->
+<nav th:fragment="navbar" class="navbar navbar-expand-md bg-body-tertiary border-bottom"
+     th:with="uri=${currentUri}">
   <div class="container">
     <a class="navbar-brand" th:href="@{/web/home}">가계부</a>
-    <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated()">
-      <a class="nav-link" th:href="@{/web/transactions}">거래</a>
-      <span class="text-muted small" sec:authentication="principal.email">user@example.com</span>
-      <form th:action="@{/logout}" method="post" class="d-inline">
-        <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>
-      </form>
+    <button class="navbar-toggler" sec:authorize="isAuthenticated()" type="button"
+            data-bs-toggle="collapse" data-bs-target="#navMenu"
+            aria-controls="navMenu" aria-expanded="false" aria-label="메뉴 토글">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu" sec:authorize="isAuthenticated()">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/transactions')}">
+          <a class="nav-link" th:href="@{/web/transactions}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">거래</a>
+        </li>
+        <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/trend')}">
+          <a class="nav-link" th:href="@{/web/trend}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">추이</a>
+        </li>
+        <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/budget')}">
+          <a class="nav-link" th:href="@{/web/budget}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">예산</a>
+        </li>
+        <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/networth')}">
+          <a class="nav-link" th:href="@{/web/networth}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">순자산</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('OWNER')"
+            th:with="isActive=${#strings.startsWith(uri, '/web/admin')}">
+          <a class="nav-link" th:href="@{/web/admin}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">관리</a>
+        </li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+        <span class="text-muted small" sec:authentication="principal.email">user@example.com</span>
+        <!-- 테마 토글 — 핸들러는 fragments/scripts.html, 아이콘 가시성 규칙은 app.css -->
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="themeToggle"
+                aria-label="테마 토글" title="테마 토글">
+          <span class="theme-icon-light" aria-hidden="true">🌙</span>
+          <span class="theme-icon-dark" aria-hidden="true">☀️</span>
+        </button>
+        <form th:action="@{/logout}" method="post" class="d-inline">
+          <button class="btn btn-outline-secondary btn-sm" type="submit">로그아웃</button>
+        </form>
+      </div>
     </div>
   </div>
 </nav>

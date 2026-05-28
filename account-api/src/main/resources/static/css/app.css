@@ -2,12 +2,65 @@
    Bootstrap 5 를 베이스로, 앱 고유 최소 보정만 둔다.
    페이지별 스타일이 늘어나면 그때 분리 검토. */
 
-/* iOS 홈 인디케이터 영역만큼 하단 여백 확보 (향후 영수증 FAB 공간) */
+/* 차트 색상 CSS variables — light 기본값 + dark override.
+   Chart.js inline 스크립트가 getComputedStyle 로 읽어 borderColor 에 적용한다.
+   라이트 값은 마이그레이션 전 hex 그대로 유지 (라이트 회귀 0). */
+:root {
+  --account-chart-income: #198754;
+  --account-chart-expense: #dc3545;
+  --account-chart-surplus: #0d6efd;
+  --account-chart-assets: #198754;
+  --account-chart-liabilities: #dc3545;
+  --account-chart-networth: #0d6efd;
+}
+[data-bs-theme="dark"] {
+  --account-chart-income: #20c997;
+  --account-chart-expense: #f06578;
+  --account-chart-surplus: #6ea8fe;
+  --account-chart-assets: #20c997;
+  --account-chart-liabilities: #f06578;
+  --account-chart-networth: #6ea8fe;
+}
+
+/* navbar 테마 토글 아이콘 — 현재 테마와 반대(클릭 시 갈 방향)를 보여준다.
+   light(기본): 🌙 표시("다크로"), dark: ☀️ 표시("라이트로"). */
+.theme-icon-dark { display: none; }
+[data-bs-theme="dark"] .theme-icon-light { display: none; }
+[data-bs-theme="dark"] .theme-icon-dark { display: inline; }
+
+/* iOS 홈 인디케이터 안전영역 + 영수증 FAB(56) + 위아래 여백 만큼 본문 하단 공간 확보 —
+   긴 페이지 최하단 콘텐츠가 FAB 에 가려지지 않게. login/error 페이지(layout 미사용)는
+   FAB 도 없고 짧은 카드 레이아웃이라 여백이 남아도 시각적 손해 없음. */
 body {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
 }
 
 /* 모바일 우선 — 데스크톱에서도 폰 폭 기준으로 본문 가독성 유지 */
 main.container {
   max-width: 640px;
+}
+
+/* 인라인 편집 후 fragment 로 돌아갈 때 (예: /web/networth#asset-3) row 상단에 여백을 확보 —
+   상단에 렌더되는 navbar + flash alert 가 row 를 가리지 않도록 약 88px 띄운다. */
+[id^="asset-"],
+[id^="liability-"],
+[id^="category-"] {
+  scroll-margin-top: 88px;
+}
+
+/* 영수증 촬영 FAB (Floating Action Button).
+   fragments/layout.html 의 <a class="btn btn-primary fab-camera"> 가 본 스타일을 가져간다.
+   .btn .btn-primary 의 색/포커스 스타일은 그대로 받고, 모양(원형) + 위치(fixed) + 크기만 보정. */
+.fab-camera {
+  position: fixed;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1030; /* Bootstrap fixed-bottom(1030) 동급, modal(1055) 아래 */
 }

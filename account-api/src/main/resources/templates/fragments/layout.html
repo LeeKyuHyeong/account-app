@@ -12,13 +12,34 @@
   독립 페이지는 본 레이아웃을 쓰지 않고 head fragment 만 직접 include 한다.
 -->
 <html xmlns:th="http://www.thymeleaf.org"
-      lang="ko" th:fragment="page(title, content)">
+      lang="ko" data-bs-theme="light" th:fragment="page(title, content)">
 <head th:replace="~{fragments/head :: head(${title})}"></head>
 <body class="bg-body">
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 <main class="container py-4">
+  <!--
+    공통 flash 영역. POST → redirect 핸들러가 RedirectAttributes.addFlashAttribute("message"|"error", ...)
+    로 한 번 노출. 다음 요청 시 자연 소멸하므로 dismiss 버튼 없이 둔다.
+  -->
+  <div th:if="${message}" class="alert alert-success py-2" role="alert" th:text="${message}">완료되었습니다.</div>
+  <div th:if="${error}" class="alert alert-danger py-2" role="alert" th:text="${error}">오류</div>
   <th:block th:replace="${content}"></th:block>
 </main>
+<!--
+  영수증 촬영 FAB. 모든 chromed 페이지 우하단에 fixed.
+  영수증 업로드 페이지 자체에서는 자기 자신 링크라 숨긴다.
+  스타일은 /css/app.css 의 .fab-camera, 안전영역 보정은 body padding 으로.
+-->
+<a th:unless="${#strings.startsWith(currentUri, '/web/receipts')}"
+   th:href="@{/web/receipts/new}"
+   class="btn btn-primary fab-camera shadow"
+   aria-label="영수증 촬영">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+       viewBox="0 0 16 16" aria-hidden="true">
+    <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1z"/>
+    <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5m0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0"/>
+  </svg>
+</a>
 <div th:replace="~{fragments/scripts :: scripts}"></div>
 </body>
 </html>

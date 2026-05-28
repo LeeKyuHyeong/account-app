@@ -4,6 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title th:text="${title} ?: '가계부'">가계부</title>
+  <!--
+    FOUC 방지 — stylesheet 보다 먼저 실행되어야 함.
+    localStorage 의 사용자 선택을 읽어 <html data-bs-theme> 을 라이트→다크로 즉시 교체.
+    Bootstrap 5.3 의 색상 토큰이 처음부터 올바른 값으로 적용된다.
+  -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('account-theme');
+        if (t === 'dark' || t === 'light') {
+          document.documentElement.setAttribute('data-bs-theme', t);
+        }
+      } catch (e) { /* localStorage 차단 환경(시크릿 모드 등): 기본 light 유지 */ }
+    })();
+  </script>
   <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>

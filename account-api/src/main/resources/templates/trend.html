@@ -23,14 +23,19 @@
       const incomes = /*[[${incomes}]]*/ [];
       const expenses = /*[[${expenses}]]*/ [];
       const surpluses = /*[[${surpluses}]]*/ [];
+      // CSS variable (app.css 의 :root / [data-bs-theme="dark"]) 에서 차트 색을 읽음 — 다크모드 자동 대응.
+      const css = getComputedStyle(document.documentElement);
+      const COLOR_INCOME = css.getPropertyValue('--account-chart-income').trim();
+      const COLOR_EXPENSE = css.getPropertyValue('--account-chart-expense').trim();
+      const COLOR_SURPLUS = css.getPropertyValue('--account-chart-surplus').trim();
       new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
           labels: labels,
           datasets: [
-            { label: '수입', data: incomes, borderColor: '#198754', backgroundColor: '#198754', tension: 0.2 },
-            { label: '지출', data: expenses, borderColor: '#dc3545', backgroundColor: '#dc3545', tension: 0.2 },
-            { label: '잉여', data: surpluses, borderColor: '#0d6efd', backgroundColor: '#0d6efd', tension: 0.2 }
+            { label: '수입', data: incomes, borderColor: COLOR_INCOME, backgroundColor: COLOR_INCOME, tension: 0.2 },
+            { label: '지출', data: expenses, borderColor: COLOR_EXPENSE, backgroundColor: COLOR_EXPENSE, tension: 0.2 },
+            { label: '잉여', data: surpluses, borderColor: COLOR_SURPLUS, backgroundColor: COLOR_SURPLUS, tension: 0.2 }
           ]
         },
         options: {

@@ -39,53 +39,53 @@
     <!-- 자산 -->
     <h2 class="h6 mt-4">자산</h2>
     <ul class="list-group mb-2">
-      <li th:each="a : ${snapshot.assets}" class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-          <span th:text="${a.name}">현금</span>
-          <span class="text-muted small" th:text="'· ' + ${a.type}">· 예금</span>
-        </span>
-        <span class="d-flex align-items-center gap-2">
-          <span th:text="${#numbers.formatInteger(a.balance, 0, 'COMMA')} + '원'">0원</span>
-          <form method="post" th:action="@{/web/networth/assets/{id}/delete(id=${a.id})}">
-            <input type="hidden" name="ym" th:value="${month}">
-            <button class="btn btn-link btn-sm text-danger p-0" type="submit">삭제</button>
-          </form>
-        </span>
+      <li th:each="a : ${snapshot.assets}" class="list-group-item" th:id="'asset-' + ${a.id}">
+        <form method="post" th:action="@{/web/networth/assets/{id}(id=${a.id})}" class="row g-1">
+          <input type="hidden" name="ym" th:value="${month}">
+          <div class="col-7"><input name="name" th:value="${a.name}" class="form-control form-control-sm" placeholder="이름" required></div>
+          <div class="col-5"><input name="type" th:value="${a.type}" class="form-control form-control-sm" placeholder="종류" required></div>
+          <div class="col-9"><input type="number" inputmode="numeric" name="balance" th:value="${a.balance}" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
+          <div class="col-3 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">저장</button></div>
+        </form>
+        <form method="post" th:action="@{/web/networth/assets/{id}/delete(id=${a.id})}" class="mt-1 text-end">
+          <input type="hidden" name="ym" th:value="${month}">
+          <button class="btn btn-link btn-sm text-danger p-0" type="submit">삭제</button>
+        </form>
       </li>
       <li th:if="${snapshot.assets.isEmpty()}" class="list-group-item text-muted small">자산이 없습니다.</li>
     </ul>
     <form method="post" th:action="@{/web/networth/assets}" class="row g-1 mb-4">
-      <div class="col-4"><input name="name" class="form-control form-control-sm" placeholder="이름" required></div>
-      <div class="col-3"><input name="type" class="form-control form-control-sm" placeholder="종류" required></div>
-      <div class="col-3"><input type="number" name="balance" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
       <input type="hidden" name="yearMonth" th:value="${month}">
-      <div class="col-2 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">+</button></div>
+      <div class="col-7"><input name="name" class="form-control form-control-sm" placeholder="이름" required></div>
+      <div class="col-5"><input name="type" class="form-control form-control-sm" placeholder="종류" required></div>
+      <div class="col-9"><input type="number" inputmode="numeric" name="balance" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
+      <div class="col-3 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">+ 자산</button></div>
     </form>
 
     <!-- 부채 -->
     <h2 class="h6">부채</h2>
     <ul class="list-group mb-2">
-      <li th:each="l : ${snapshot.liabilities}" class="list-group-item d-flex justify-content-between align-items-center">
-        <span>
-          <span th:text="${l.name}">대출</span>
-          <span class="text-muted small" th:text="'· ' + ${l.type}">· 신용</span>
-        </span>
-        <span class="d-flex align-items-center gap-2">
-          <span th:text="${#numbers.formatInteger(l.balance, 0, 'COMMA')} + '원'">0원</span>
-          <form method="post" th:action="@{/web/networth/liabilities/{id}/delete(id=${l.id})}">
-            <input type="hidden" name="ym" th:value="${month}">
-            <button class="btn btn-link btn-sm text-danger p-0" type="submit">삭제</button>
-          </form>
-        </span>
+      <li th:each="l : ${snapshot.liabilities}" class="list-group-item" th:id="'liability-' + ${l.id}">
+        <form method="post" th:action="@{/web/networth/liabilities/{id}(id=${l.id})}" class="row g-1">
+          <input type="hidden" name="ym" th:value="${month}">
+          <div class="col-7"><input name="name" th:value="${l.name}" class="form-control form-control-sm" placeholder="이름" required></div>
+          <div class="col-5"><input name="type" th:value="${l.type}" class="form-control form-control-sm" placeholder="종류" required></div>
+          <div class="col-9"><input type="number" inputmode="numeric" name="balance" th:value="${l.balance}" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
+          <div class="col-3 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">저장</button></div>
+        </form>
+        <form method="post" th:action="@{/web/networth/liabilities/{id}/delete(id=${l.id})}" class="mt-1 text-end">
+          <input type="hidden" name="ym" th:value="${month}">
+          <button class="btn btn-link btn-sm text-danger p-0" type="submit">삭제</button>
+        </form>
       </li>
       <li th:if="${snapshot.liabilities.isEmpty()}" class="list-group-item text-muted small">부채가 없습니다.</li>
     </ul>
     <form method="post" th:action="@{/web/networth/liabilities}" class="row g-1 mb-3">
-      <div class="col-4"><input name="name" class="form-control form-control-sm" placeholder="이름" required></div>
-      <div class="col-3"><input name="type" class="form-control form-control-sm" placeholder="종류" required></div>
-      <div class="col-3"><input type="number" name="balance" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
       <input type="hidden" name="yearMonth" th:value="${month}">
-      <div class="col-2 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">+</button></div>
+      <div class="col-7"><input name="name" class="form-control form-control-sm" placeholder="이름" required></div>
+      <div class="col-5"><input name="type" class="form-control form-control-sm" placeholder="종류" required></div>
+      <div class="col-9"><input type="number" inputmode="numeric" name="balance" min="0" step="1" class="form-control form-control-sm" placeholder="잔액" required></div>
+      <div class="col-3 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit">+ 부채</button></div>
     </form>
 
     <div class="d-grid gap-2">
@@ -99,14 +99,19 @@
       const assetsSeries = /*[[${assetsSeries}]]*/ [];
       const liabilitiesSeries = /*[[${liabilitiesSeries}]]*/ [];
       const netWorthSeries = /*[[${netWorthSeries}]]*/ [];
+      // CSS variable (app.css 의 :root / [data-bs-theme="dark"]) 에서 차트 색을 읽음 — 다크모드 자동 대응.
+      const css = getComputedStyle(document.documentElement);
+      const COLOR_ASSETS = css.getPropertyValue('--account-chart-assets').trim();
+      const COLOR_LIABILITIES = css.getPropertyValue('--account-chart-liabilities').trim();
+      const COLOR_NETWORTH = css.getPropertyValue('--account-chart-networth').trim();
       new Chart(document.getElementById('nwChart'), {
         type: 'line',
         data: {
           labels: labels,
           datasets: [
-            { label: '자산', data: assetsSeries, borderColor: '#198754', tension: 0.2 },
-            { label: '부채', data: liabilitiesSeries, borderColor: '#dc3545', tension: 0.2 },
-            { label: '순자산', data: netWorthSeries, borderColor: '#0d6efd', tension: 0.2 }
+            { label: '자산', data: assetsSeries, borderColor: COLOR_ASSETS, tension: 0.2 },
+            { label: '부채', data: liabilitiesSeries, borderColor: COLOR_LIABILITIES, tension: 0.2 },
+            { label: '순자산', data: netWorthSeries, borderColor: COLOR_NETWORTH, tension: 0.2 }
           ]
         },
         options: {
