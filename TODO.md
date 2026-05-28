@@ -89,7 +89,7 @@ M4 정리:    ▓▓▓▓▓▓▓  apiChain/JWT/REST/flutter_app 제거 완료
 - [x] **추이 차트** (`GET /web/trend`, `WebTrendController`) — `MonthlySummaryService.series` 최근 6개월 → Chart.js 라인(수입/지출/잉여). 데이터는 `th:inline="javascript"` 로 주입
 - [x] **예산 설정** (`GET/POST /web/budget`, `WebBudgetController`) — 이번 달 지출 카테고리 진행률 bar + 초과 강조 + 카테고리별 예산 수정. 예산 수정은 `CategoryQueryService.updateBudget`(findAll+filter, 격리 안전)
 - [x] **순자산** (`GET /web/networth`, `WebNetWorthController`) — 스냅샷(자산/부채 목록 + 합계 + 순자산) + 12개월 Chart.js 추이(자산/부채/순자산 3선) + 자산/부채 추가·삭제 + 월 선택
-- [ ] **순자산 편집 유예** — 월별 스냅샷 모델상 삭제 후 재추가로 갈음. 필요 시 후속(인라인 편집 또는 편집 페이지)
+- [x] **순자산 자산/부채 인라인 편집** (2026-05-28) — 행마다 이름·종류·잔액 인라인 폼으로 즉시 수정. `WebNetWorthController` 에 `POST /web/networth/assets/{id}` + `/liabilities/{id}` 추가 (이미 격리 안전한 `NetWorthService.updateAsset/updateLiability` + `UpdateRequest` 재사용, yearMonth=null 로 월 불변). 월 변경은 미지원 — 월 잘못 입력 시는 기존처럼 삭제 후 재추가
 - [x] **🔒 격리 누수 수정**: `NetWorthService.updateAsset/deleteAsset/updateLiability/deleteLiability` 가 `findById`(PK 직접 로드 → `@Filter` 미적용) 쓰던 것을 `findOne(Specification)` 로 교체 (M1 거래와 동일 패턴, 기존 REST 에도 있던 누수)
 - [x] Chart.js CDN — 차트 페이지에서 페이지별 include (전역 X)
 - 검증: ✅ 추이 labels/데이터 주입, 예산 설정·영속·진행률, 순자산 추가→합계 반영→삭제→0 복귀, 12개월 추이. 격리: owner2 가 owner1 자산 삭제 시 400 차단·자산 생존. 홈에 추이/예산/순자산 링크
@@ -108,7 +108,7 @@ M4 정리:    ▓▓▓▓▓▓▓  apiChain/JWT/REST/flutter_app 제거 완료
 - [x] CI 에서 Flutter 잡 제거 (`.github/workflows/ci.yml`) — backend 잡 단독
 - [x] Android signing 자산 제거 — `.gitignore` 의 `key.properties`/`*.jks`/`*.keystore` 패턴 + Flutter 블록 제거, `docs/deployment.md` §7 Flutter/서명 섹션 삭제
 - [x] (Claude) `docs/deployment.md` (§0 JWT / §6 /api curl / §7 Flutter) + `README.md` (JWT/REST/Flutter 서술) SSR 기준 정리
-- [ ] **(사용자) CLAUDE.md + `docs/account.md` 최신화** — Flutter 기준 서술 → SSR 기준으로. *사용자가 직접 진행.*
+- [x] **CLAUDE.md + `docs/account.md` 최신화** (2026-05-28) — Flutter/JWT/REST 서술을 SSR/세션/Web 컨트롤러 기준으로 정리. 역사적 의사결정(구 §8 Week 1 / 구 §9 Week 2-6 로드맵)은 통째로 들어내고 (git log + TODO.md 가 이력 추적), 후속 절 번호 재정렬 (§10→§9, §11→§10, ...). §10 결정사항: #2(iOS)는 무효 표시, #6(FAB) 실제 구현 명시, #7(Multi-tenant) "JWT 클레임" → "세션 principal" 로 갱신. v1.1 백로그에서 완료된 항목(순자산 화면 M3, 예산 초과 경고 M1) 제거
 
 ---
 
@@ -117,11 +117,23 @@ M4 정리:    ▓▓▓▓▓▓▓  apiChain/JWT/REST/flutter_app 제거 완료
 > M0~M4(마이그레이션)는 완료. 2026-05-27 운영 배포(account.kyuhyeong.com, 호스트 8085) + CI/CD(GitHub Actions: ci.yml 빌드·테스트 / deploy.yml SSH 배포) 가동. 아래는 그 이후 백로그.
 
 ### 기능
-- [ ] **관리자 페이지** (`/web/admin/**`, OWNER 전용) — 사용자 / 가구 / 비밀번호를 UI 로 관리
+- [x] **관리자 페이지** (`/web/admin/**`, OWNER 전용) — 가구 멤버 목록·역할 + 비밀번호 재설정 (최소 범위)
   - 동기: 현재 사용자·비번·테스트데이터 정리가 전부 raw SQL 이라 운영 시 위험·번거로움 ([`data-cleaning.md`](data-cleaning.md) 참조). 이를 UI 로 대체.
-  - 범위(초안): 가구 멤버 목록·역할 표시 / 사용자 비밀번호 재설정 / (선택) 시드·테스트 데이터 정리 액션.
-  - 권한: 세션 role=OWNER 만 접근 — `SecurityConfig.authorizeHttpRequests` 에 `/web/admin/**` → `hasRole("OWNER")` 추가.
-  - ⚠ **MVP 범위 확장**: `docs/account.md` §11 의 "OWNER/MEMBER 권한 차등" · "회원가입/초대 UI" 는 v1.5+ 유예 항목 → 착수 전 scope 정합 확인.
+  - 구현: `WebAdminController`(GET `/web/admin` 목록 / POST `/web/admin/users/{userId}/password` 재설정) + `AdminUserService` + `admin/users.html` + navbar OWNER 전용 "관리" 링크. `SecurityConfig` 에 `/web/admin/**` → `hasRole("OWNER")`.
+  - **🔒 격리 가드**: `User`/`HouseholdMember` 는 `@Filter` 미적용(전역 식별 단위)이라, 비번 재설정 시 `findByHouseholdIdAndUserId` 멤버십 검증으로 타 가구 사용자 변경을 코드로 차단. `User.changePassword(hash)` 비즈니스 메서드 추가(@Setter 금지 준수). 단위 테스트 `AdminUserServiceTest`(멤버 매핑/정렬 · 인코딩 · 비멤버 거부) 통과.
+  - scope 결정(2026-05-28): "(선택) 시드·테스트 데이터 정리 액션" 은 **제외** (운영 클리닝은 `data-cleaning.md` raw-SQL 유지). `docs/account.md` §8 v1.5 유예 항목과의 정합을 위해 OWNER 게이트는 관리자 섹션 한정의 최소 권한 차등으로만 도입.
+  - ⏳ **수동 e2e 미검증**: bootRun + 브라우저 시나리오(owner1 → 관리 링크 노출/목록/비번 변경 후 재로그인, member1 → `/web/admin` 403)는 사용자 환경에서 1회 확인 필요.
+
+### 폰 UX 개선 (모바일 반응형)
+- [x] **A. 폼 입력 개선** (2026-05-28) — 금액 input `inputmode="decimal"`(거래/영수증), 잔액·예산 `inputmode="numeric"`(순자산/예산) → iOS/Android 적절한 숫자 키패드. `networth.html` 인라인 편집·추가 폼 4개를 `col-7/5 + col-9/3` 2행 레이아웃으로 변경(좁은 폰에서 잔액 가로 잘림 회피). 거래 목록 페이지네이션·필터 적용 버튼 `btn-sm` 제거(터치 타겟 ↑). 보조 액션(`홈으로`/`취소`/`+ 입력`)은 시각적 위계 유지 위해 그대로
+- [x] **B. 영수증 촬영 FAB** (2026-05-28) — `docs/account.md` §10 #6 미구현분. `fragments/layout.html` 에 fixed 우하단 56×56 원형 anchor → `/web/receipts/new`. 인라인 SVG(Bootstrap Icons camera path) 아이콘, `aria-label` 부여. `#httpServletRequest.requestURI` 로 `/web/receipts` 경로에서는 자기 자신 링크라 숨김. `app.css` 에 `.fab-camera` + `body` 패딩 `safe-area + 88px` 로 확장(긴 페이지 최하단 FAB 가림 방지). **스코프 확장**: §10 문구는 "홈 + 카메라 FAB"지만 layout fragment 한 곳에서 처리해 모든 chromed 페이지(거래/예산/순자산/추이/관리)에 노출 — Material FAB 패턴 본의(persistent quick action) 정합 + 진입 1탭 단축이 화면 가로질러 발휘
+- [x] **C. navbar 햄버거 메뉴** (2026-05-28) — `fragments/navbar.html` 을 `navbar-expand-md` + `navbar-toggler` + `collapse navbar-collapse` 구조로 재작성. 768px 미만(폰/landscape 폰)에서 햄버거 토글, 이상에서 풀-가로. 메뉴 = 거래 · 추이 · 예산 · 순자산 · 관리(OWNER) · email · 로그아웃. `home.html` 푸터의 추이/예산/순자산 small 링크 제거(navbar로 통합). 핵심 액션 3버튼(영수증 촬영/직접 입력/거래 목록)은 home 에 그대로 유지. JS 의존 추가 X (Bootstrap bundle 기존 포함)
+- [x] **D. navbar active 페이지 표시** (2026-05-28) — `fragments/navbar.html` 의 5개 nav-link (거래/추이/예산/순자산/관리) 에 `#strings.startsWith(#httpServletRequest.requestURI, '/web/{section}')` 기반 `active` 클래스 + `aria-current="page"` 조건부 부여. `th:with="uri=..."` 로 nav 전체에 1회 평가. `/web/transactions/123` 같은 하위 경로에서도 "거래" 강조. 브랜드는 active 처리 안 함 (홈 진입점은 항상 브랜드)
+- [x] **E. 거래 목록 필터 collapsible** (2026-05-28) — `transactions/list.html` 의 필터 폼을 Bootstrap `collapse` 로 감쌈. 필터 미설정 시 접힘, 설정되어 있으면 펼침(서버 측 `th:with="hasFilter=..."` 판단 → `show` 클래스 조건부 부여). 헤더 우측에 "필터" 토글 버튼 (필터 설정 시 `●` 점 indicator + `aria-expanded` 동기화). 컨트롤러 변경 0, JS 의존 추가 X (Bootstrap bundle 기존 포함)
+- [x] **F. flash 메시지 일관화** (2026-05-28) — `fragments/layout.html` `<main>` 최상단에 공통 `message`/`error` alert 영역 1곳 추가. 거래 create/update, 예산 update, 순자산 자산·부채 6 CRUD 엔드포인트 모두 `RedirectAttributes.addFlashAttribute("message", ...)` 부여. 거래 update 는 `confirm=true` 시 "확정" vs 일반 "수정" 분기. `admin/users.html` 의 기존 flash divs 는 중복 노출 회피로 제거 (layout 으로 이전). 에러 케이스(검증/예외)는 본 PR 범위 외 — 기존 폼 재렌더/error.html 흐름 유지
+- [x] **G. 인라인 폼 저장 후 스크롤 위치 보존** (2026-05-28) — URL fragment 방식. `networth.html` 의 자산/부채 `<li>` 에 `id="asset-{id}"`/`id="liability-{id}"`, `budget.html` 의 카테고리 row `<div>` 에 `id="category-{id}"` 부여. 컨트롤러는 update redirect URL 에 `#asset-N`/`#liability-N`/`#category-N` 부착 → 브라우저 native scroll-to-anchor 로 편집한 행 위치로 복귀. `app.css` 에 attribute selector `[id^="asset-"], [id^="liability-"], [id^="category-"] { scroll-margin-top: 88px }` 추가 — 상단 flash alert 가 row 를 가리지 않도록 여백 확보. 대상: update 만 (create/delete 는 row 가 없거나 모호해 제외). 0 JS
+- [x] **H. Dark mode** (2026-05-28) — Bootstrap 5.3.3 의 native `data-bs-theme` 활용. `fragments/head.html` 의 stylesheet 앞에 inline script (`localStorage('account-theme')` 읽고 `<html>` attribute 설정 → FOUC 0). `fragments/layout.html`·`login.html`·`error.html` 의 `<html>` 에 `data-bs-theme="light"` 기본값. `app.css` 에 차트 6색 CSS variables (`:root` 라이트 + `[data-bs-theme="dark"]` override) + theme 아이콘 가시성 규칙. `trend.html`/`networth.html` 차트가 `getComputedStyle().getPropertyValue('--account-chart-*')` 로 색 읽음. `navbar.html` 우측에 🌙/☀️ 토글 버튼, `scripts.html` 에 클릭 핸들러(13줄, defensive null-check). 컨트롤러 변경 0, 새 의존성 0. 라이트 회귀 0 (기존 hex 그대로 보존)
+- [x] **🐛 Fix: `#httpServletRequest` SpEL EL1007E** (2026-05-28) — PR B(FAB 숨김) / PR D(navbar active) 에서 `${#httpServletRequest.requestURI}` 사용했으나 Thymeleaf 3.1 (Spring Boot 3.3 번들) 부터 servlet implicit object 직접 접근 불가 (`EL1007E: Property 'requestURI' cannot be found on null`). 누적된 PR들이 실제 bootRun 시점에 일괄 발견됨. 해결: `ViewContextAdvice`(@ControllerAdvice) 신설 → `@ModelAttribute("currentUri")` 가 `request.getRequestURI()` 를 모든 SSR 응답 모델에 자동 주입. `navbar.html` 의 `th:with="uri=${#httpServletRequest.requestURI}"` 와 `layout.html` 의 FAB 숨김 조건 둘 다 `${currentUri}` 로 교체. 다크모드(PR H) 와 직접 무관
 
 ### 운영 (1회성 / 상시)
 - [ ] **운영 DB 데이터 클리닝** — dev 시드(테스트가구 + 약한 비번 계정) 제거. 절차: [`data-cleaning.md`](data-cleaning.md). ⚠ **아직 미적용.**
