@@ -53,7 +53,7 @@ Andrej Karpathy의 LLM 코딩 함정 관찰을 기반으로 함.
 - `application-dev.yml` / `application-stg.yml` / `application-prd.yml` 분리는 도입 X. 현재는 `application.yml` + `application-secret.yml` (gitignored) + env 오버라이드 (운영도 동일 — `docker-compose.prod.yml` 에서 env 주입).
 - `account-batch` 가 비어 있어도 첫 잡 추가 시 `AbstractScheduledJob` 같은 부모 클래스부터 만들지 마라. 한 잡으로 끝나면 한 클래스로 끝낸다.
 - 인라인 폼 저장/삭제를 위해 새 `Web*Service` 만들기 전에 기존 `TransactionService` / `NetWorthService` / `MerchantHistoryService` 등에 메서드 추가가 가능한지부터 본다 (Web 컨트롤러 = 얇은 어댑터 컨벤션).
-- **MVP scope (`docs/account.md` §10 결정 사항 + §8 백로그) 를 임의로 확장하지 마라**: 회원가입/초대 UI, OWNER/MEMBER 권한 차등(관리자 페이지의 OWNER 게이트는 예외적 최소 적용), 카테고리 커스터마이징 UI, FCM 푸시, 결혼지출 화면 — 전부 v1.1 / v1.5 / v2 로 유예된 항목.
+- **MVP scope (`docs/account.md` §10 결정 사항 + §8 백로그) 를 임의로 확장하지 마라**: 회원가입/초대 UI, OWNER/MEMBER 권한 차등(관리자 페이지의 OWNER 게이트는 예외적 최소 적용), FCM 푸시, 결혼지출 화면 — 전부 v1.1 / v1.5 / v2 로 유예된 항목. (카테고리 커스터마이징 UI 는 2026-05-28 본격 구현됨 — 더 이상 유예 항목 아님.)
 
 ---
 
@@ -184,7 +184,7 @@ account-core   ←─── account-api ←─── (없음)
 - **`account-core`**: 도메인 Entity (12개) + Repository + Multi-tenant 격리 본체 (`HouseholdContext`, `HouseholdFilterAspect`, Hibernate `@Filter`) + Flyway 마이그레이션. **다른 어떤 `account-*` 모듈에도 의존 X** (`build.gradle.kts` 의 강한 정책).
 - **`account-ai`**: Claude Vision API 호출 + 프롬프트 조립 + JSON 파싱. **다른 어떤 `account-*` 모듈에도 의존 X**. `MerchantHistoryProvider` 같은 인터페이스만 외부에 공개.
 - **`account-api`**: **Thymeleaf SSR 컨트롤러** (`Web*Controller`, `/web/**`) + **Spring Security 세션 + formLogin** + 영수증 인제스천 흐름. `account-core` + `account-ai` 둘 다에 의존하는 유일한 모듈 — 어댑터 (예: `JpaMerchantHistoryProvider`) 는 이쪽에 배치. ~~REST 컨트롤러 + JWT 인증~~ 은 M4 (2026-05-27) 에 제거됨.
-- **`account-batch`**: 월말 집계 / 이미지 정리 계획만 — **현재 비어 있음**. `account-core` 에만 의존, `account-api` 의존 금지.
+- **`account-batch`**: 월말 집계 / 이미지 정리 계획만 — **현재 비어 있음**. `account-core` 에만 의존, `account-api` 의존 금지. (반복 거래 스케줄러는 현재 잡이 1개라 `account-api/recurring/` 안에 거치 — 잡이 2개 이상 되면 본 모듈로 이전.)
 - ~~`flutter_app`~~: M4 (2026-05-27) 에 디렉터리 삭제 — Thymeleaf SSR 단일화.
 
 ### 6.2 Multi-tenant 격리 흐름 (본 프로젝트의 가장 중요한 디자인)
@@ -209,6 +209,9 @@ account-core   ←─── account-api ←─── (없음)
 - **로그인**: `WebAuthController.login` → Spring Security formLogin (`usernameParameter=email`) → `CustomUserDetailsService.loadUserByUsername` (user + 첫 HouseholdMember 조회) → `CustomUserDetails(userId, activeHouseholdId, role, email, passwordHash)` → SecurityContext + HttpSession 저장 → `defaultSuccessUrl=/web/home`.
 - **영수증 인제스천**: `WebReceiptController` → `ReceiptIngestionService.ingest` (@Transactional 단일 트랜잭션) → `ReceiptStorage.store` (디스크) + `Receipt` insert + `MerchantHistoryProvider.getRecentHistory` + `ReceiptAnalysisService.analyze` (Claude) + 카테고리 fallback 매칭 + DRAFT `Transaction` insert → `receipts/confirm.html` 렌더 (전체필드 편집 + DRAFT→CONFIRMED 확정은 `POST /web/transactions/{id}` 재사용).
 - **거래 목록**: `WebTransactionController.list` → `TransactionService.list` → `JpaSpecificationExecutor` 로 동적 필터 (from/to/categoryId/type/status) + 페이지네이션 + `occurred_at DESC`, soft-delete (`deletedAt IS NULL`) 자동 제외 → `transactions/list.html` 날짜별 그룹.
+- **거래 삭제 (soft)**: `POST /web/transactions/{id}/delete` → `TransactionService.softDelete` → `findOne(Specification)` 격리 가드 + `Transaction.softDelete(actor)` (deletedAt + updatedBy 세팅) + `TransactionHistoryService.logDelete` (ChangeType.DELETE + beforeJson). 거래 수정 화면의 별도 폼 + native `confirm()` 가드.
+- **카테고리 관리**: `WebCategoryController` → `CategoryQueryService` 의 `create/edit/delete`. 단건 조회는 `findAll().filter()` (Hibernate filter 적용). 삭제 시 `transactionRepository.countByCategoryId` + `recurringRepository.countByCategoryId` 둘 다 0 이어야 통과 — 하나라도 양수면 `IllegalStateException` + 어디서 막혔는지 friendly 메시지. DB FK 가 RESTRICT 라 사전 카운트는 사용자 친절 + 정확한 안내용.
+- **반복 거래 자동 적재**: `RecurringTransactionScheduler` 가 매일 KST 05:00 `@Scheduled` → `RecurringTransactionService.runDueAcrossHouseholds(today)` → 가구별 `runDueForHousehold` (자체 `@Transactional` + `HouseholdContext` 명시 set/clear). 가구 단위 try-catch 라 한 가구 실패가 다음 가구를 막지 않음. `runRule` 은 `last_run_year_month` (YYYY-MM) 가 현재월이면 skip (멱등), today < fireDate 면 skip, day=31 같은 짧은 달은 말일로 클램프. 발화 시 `TransactionService.create` 재사용 → CONFIRMED 거래 + history CREATE + merchant_history upsert. author=`household.owner`. 사용자가 `POST /web/recurring/run-now` 로 동일 로직 즉시 실행 가능 (멱등).
 - **관리자 (OWNER 전용)**: `WebAdminController` → `AdminUserService.listMembers / resetPassword` → BCrypt 인코딩 후 `User.changePassword(hash)`. 가구 경계는 `findByHouseholdIdAndUserId` 로 직접 가드 (User/HouseholdMember 비격리).
 
 ---
