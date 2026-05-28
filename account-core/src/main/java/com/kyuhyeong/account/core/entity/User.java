@@ -56,6 +56,11 @@ public class User {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    /** 비밀번호 변경 — 인코딩된(BCrypt) 해시를 전달받는다. 인코딩 책임은 호출 측(서비스). */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }

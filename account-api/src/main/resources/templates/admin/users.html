@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{fragments/layout :: page('관리자', ~{::content})}">
+  <th:block th:fragment="content">
+
+    <h1 class="h5 mb-1">관리자</h1>
+    <p class="text-muted small mb-3">가구 멤버 관리 · 비밀번호 재설정</p>
+
+    <!-- flash 메시지는 fragments/layout.html 의 공통 영역이 처리 -->
+
+    <div class="card">
+      <div class="list-group list-group-flush">
+        <div th:each="m : ${members}" class="list-group-item">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold" th:text="${m.name}">홍길동</div>
+              <div class="text-muted small" th:text="${m.email}">user@example.com</div>
+            </div>
+            <span class="badge"
+                  th:classappend="${m.role == 'OWNER'} ? 'text-bg-primary' : 'text-bg-secondary'"
+                  th:text="${m.role}">OWNER</span>
+          </div>
+          <div class="text-muted small mt-1">
+            최근 로그인:
+            <span th:text="${m.lastLoginAt != null
+                  ? #temporals.format(m.lastLoginAt, 'yyyy-MM-dd HH:mm') : '없음'}">없음</span>
+          </div>
+          <form method="post" class="input-group input-group-sm mt-2"
+                th:action="@{/web/admin/users/{userId}/password(userId=${m.userId})}">
+            <input type="password" name="newPassword" class="form-control" autocomplete="new-password"
+                   minlength="8" placeholder="새 비밀번호 (8자 이상)" required>
+            <button class="btn btn-outline-danger" type="submit">비밀번호 변경</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2 mt-3">
+      <a th:href="@{/web/home}" class="btn btn-outline-secondary btn-sm">홈으로</a>
+    </div>
+
+  </th:block>
+</th:block>
+</body>
+</html>

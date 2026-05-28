@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -109,7 +110,8 @@ public class WebTransactionController {
                          BindingResult binding,
                          @RequestParam Map<String, String> raw,
                          @AuthenticationPrincipal CustomUserDetails user,
-                         Model model) {
+                         Model model,
+                         RedirectAttributes ra) {
         if (binding.hasErrors()) {
             model.addAttribute("form", raw);
             model.addAttribute("errors", fieldErrors(binding));
@@ -118,6 +120,7 @@ public class WebTransactionController {
             return "transactions/new";
         }
         transactionService.create(dto, user.getUserId());
+        ra.addFlashAttribute("message", "거래가 추가되었습니다.");
         return "redirect:/web/transactions";
     }
 
@@ -137,11 +140,14 @@ public class WebTransactionController {
                          @RequestParam(required = false) String paymentMethod,
                          @RequestParam(required = false) String memo,
                          @RequestParam(required = false) Boolean confirm,
-                         @AuthenticationPrincipal CustomUserDetails user) {
+                         @AuthenticationPrincipal CustomUserDetails user,
+                         RedirectAttributes ra) {
+        boolean confirmed = Boolean.TRUE.equals(confirm);
         transactionService.edit(id, new TransactionService.EditRequest(
                 categoryId, amount, occurredAt,
                 emptyToNull(merchant), emptyToNull(paymentMethod), emptyToNull(memo),
-                Boolean.TRUE.equals(confirm)), user.getUserId());
+                confirmed), user.getUserId());
+        ra.addFlashAttribute("message", confirmed ? "거래가 확정되었습니다." : "거래가 수정되었습니다.");
         return "redirect:/web/transactions";
     }
 

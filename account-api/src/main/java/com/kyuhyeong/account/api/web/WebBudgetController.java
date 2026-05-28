@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -55,9 +56,12 @@ public class WebBudgetController {
 
     @PostMapping("/web/budget")
     public String update(@RequestParam Long categoryId,
-                         @RequestParam BigDecimal budgetMonthly) {
+                         @RequestParam BigDecimal budgetMonthly,
+                         RedirectAttributes ra) {
         categoryQueryService.updateBudget(categoryId, budgetMonthly);
-        return "redirect:/web/budget";
+        ra.addFlashAttribute("message", "예산이 저장되었습니다.");
+        // 긴 카테고리 목록에서 편집한 행으로 돌아가도록 fragment 부여
+        return "redirect:/web/budget#category-" + categoryId;
     }
 
     /** 한 카테고리의 예산 진행률 표시용 view row. pct 는 실제 비율(>100 가능), over 는 초과 여부. */
