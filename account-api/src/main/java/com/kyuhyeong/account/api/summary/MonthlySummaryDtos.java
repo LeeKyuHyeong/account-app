@@ -38,6 +38,25 @@ public final class MonthlySummaryDtos {
     ) {
     }
 
+    /**
+     * 임의 기간(일 단위, 양끝 inclusive) 합계 응답 — 기간/연 결산 화면용.
+     *
+     * <p>{@link MonthlySummaryResponse} 와 필드 동일하나 {@code yearMonth} 대신 표기용
+     * {@code label}(예: "2026-01-01 ~ 2026-12-31") 을 가진다. 잉여금 정의는 동일:
+     * 수입 - (고정 + 변동), 투자/저축은 별도 라인.
+     */
+    public record PeriodSummaryResponse(
+            String label,
+            BigDecimal income,
+            BigDecimal expenseFixed,
+            BigDecimal expenseVariable,
+            BigDecimal invest,
+            BigDecimal totalExpense,
+            BigDecimal surplus,
+            List<CategoryAmount> byCategory
+    ) {
+    }
+
     public record CategoryAmount(
             Long categoryId,
             String name,

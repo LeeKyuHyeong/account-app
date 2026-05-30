@@ -11,6 +11,10 @@ import com.kyuhyeong.account.core.enums.TransactionStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -94,6 +99,67 @@ public class WebTransactionController {
         model.addAttribute("fCategoryId", categoryId);
         model.addAttribute("fStatus", status);
         return "transactions/list";
+    }
+
+    /**
+     * CSV 내보내기 — 목록과 동일 필터를 받아 매칭 거래 전체를 CSV 로 다운로드.
+     * 엑셀 한글 깨짐 방지를 위해 UTF-8 BOM 을 선두에 붙인다.
+     */
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) CategoryType type,
+            @RequestParam(required = false) TransactionStatus status) {
+
+        List<TransactionResponse> rows = transactionService.listForExport(
+                new TransactionListQuery(from, to, categoryId, type, status, 0, 0));
+
+        // 엑셀이 UTF-8 로 인식하도록 선두 BOM(EF BB BF) 을 바이트로 직접 부착 (소스 인코딩 비의존).
+        byte[] csvBytes = toCsv(rows).getBytes(StandardCharsets.UTF_8);
+        byte[] body = new byte[csvBytes.length + 3];
+        body[0] = (byte) 0xEF;
+        body[1] = (byte) 0xBB;
+        body[2] = (byte) 0xBF;
+        System.arraycopy(csvBytes, 0, body, 3, csvBytes.length);
+        String filename = "transactions_" + LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE) + ".csv";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("text", "csv", StandardCharsets.UTF_8));
+        headers.add("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        return new ResponseEntity<>(body, headers, HttpStatus.OK);
+    }
+
+    private static final DateTimeFormatter CSV_DATETIME =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    /** 거래 목록 → RFC4180 CSV 문자열 (헤더 포함, 줄바꿈 CRLF). */
+    private static String toCsv(List<TransactionResponse> rows) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("거래일시,카테고리,분류,금액,상점,결제수단,메모,상태\r\n");
+        for (TransactionResponse t : rows) {
+            sb.append(csv(t.occurredAt() == null ? "" : t.occurredAt().format(CSV_DATETIME))).append(',')
+                    .append(csv(t.categoryName())).append(',')
+                    .append(csv(t.categoryType() == null ? "" : t.categoryType().name())).append(',')
+                    .append(csv(t.amount() == null ? "" : t.amount().toPlainString())).append(',')
+                    .append(csv(t.merchant())).append(',')
+                    .append(csv(t.paymentMethod())).append(',')
+                    .append(csv(t.memo())).append(',')
+                    .append(csv(t.status() == null ? "" : t.status().name())).append("\r\n");
+        }
+        return sb.toString();
+    }
+
+    /** RFC4180 필드 escape — 콤마/따옴표/개행 포함 시 따옴표로 감싸고 내부 따옴표는 이중화. */
+    private static String csv(String v) {
+        if (v == null || v.isEmpty()) {
+            return "";
+        }
+        boolean needQuote = v.indexOf(',') >= 0 || v.indexOf('"') >= 0
+                || v.indexOf('\n') >= 0 || v.indexOf('\r') >= 0;
+        String s = v.replace("\"", "\"\"");
+        return needQuote ? "\"" + s + "\"" : s;
     }
 
     @GetMapping("/new")

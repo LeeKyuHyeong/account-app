@@ -64,6 +64,18 @@ public class TransactionService {
         return PageResponse.of(page.map(TransactionResponse::from));
     }
 
+    /**
+     * CSV export 용 — {@link #list} 와 동일 필터({@code buildSpec})를 쓰되 페이지네이션 없이
+     * 매칭 전체를 occurred_at DESC 로 반환. 가구 격리 자동 적용.
+     */
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> listForExport(TransactionListQuery query) {
+        Sort sort = Sort.by(Sort.Order.desc("occurredAt"), Sort.Order.desc("id"));
+        return transactionRepository.findAll(buildSpec(query), sort).stream()
+                .map(TransactionResponse::from)
+                .toList();
+    }
+
     /** 단건 조회 — 웹 수정 화면 진입용. soft-delete 된 거래는 없는 것으로 취급. */
     @Transactional(readOnly = true)
     public TransactionResponse get(Long id) {

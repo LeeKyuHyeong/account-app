@@ -2,6 +2,7 @@ package com.kyuhyeong.account.api.summary;
 
 import com.kyuhyeong.account.api.summary.MonthlySummaryDtos.CategoryAmount;
 import com.kyuhyeong.account.api.summary.MonthlySummaryDtos.MonthlySummaryResponse;
+import com.kyuhyeong.account.api.summary.MonthlySummaryDtos.PeriodSummaryResponse;
 import com.kyuhyeong.account.core.entity.Category;
 import com.kyuhyeong.account.core.entity.Transaction;
 import com.kyuhyeong.account.core.enums.CategoryType;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -79,7 +81,43 @@ public class MonthlySummaryService {
     public MonthlySummaryResponse get(YearMonth yearMonth) {
         LocalDateTime from = yearMonth.atDay(1).atStartOfDay();
         LocalDateTime to = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+        Aggregate agg = aggregate(from, to);
+        return new MonthlySummaryResponse(
+                yearMonth.toString(),
+                agg.income(), agg.expenseFixed(), agg.expenseVariable(), agg.invest(),
+                agg.totalExpense(), agg.surplus(), agg.byCategory());
+    }
 
+    /**
+     * 임의 기간(일 단위, 양끝 inclusive) 합계 — 기간/연 결산 화면용.
+     *
+     * @param fromInclusive 시작일 (포함)
+     * @param toInclusive   종료일 (포함) — 내부에서 +1일 해 반-개구간 [from, to) 으로 변환
+     * @param label         화면 표기용 기간 라벨
+     */
+    @Transactional(readOnly = true)
+    public PeriodSummaryResponse getRange(LocalDate fromInclusive, LocalDate toInclusive, String label) {
+        if (fromInclusive == null || toInclusive == null) {
+            throw new IllegalArgumentException("from / to are required");
+        }
+        if (toInclusive.isBefore(fromInclusive)) {
+            throw new IllegalArgumentException(
+                    "to (" + toInclusive + ") must not be before from (" + fromInclusive + ")");
+        }
+        Aggregate agg = aggregate(
+                fromInclusive.atStartOfDay(),
+                toInclusive.plusDays(1).atStartOfDay());
+        return new PeriodSummaryResponse(
+                label,
+                agg.income(), agg.expenseFixed(), agg.expenseVariable(), agg.invest(),
+                agg.totalExpense(), agg.surplus(), agg.byCategory());
+    }
+
+    /**
+     * 한 {@code [from, to)} 구간의 카테고리별/타입별 합계 집계 (메모리). get/getRange 공용.
+     * 가구 격리는 Hibernate {@code householdFilter} 가 자동 적용.
+     */
+    private Aggregate aggregate(LocalDateTime from, LocalDateTime to) {
         Specification<Transaction> spec = (root, cq, cb) -> cb.and(
                 cb.isNull(root.get("deletedAt")),
                 cb.greaterThanOrEqualTo(root.get("occurredAt"), from),
@@ -116,12 +154,13 @@ public class MonthlySummaryService {
 
         BigDecimal totalExpense = expenseFixed.add(expenseVariable);
         BigDecimal surplus = income.subtract(totalExpense);
-
-        return new MonthlySummaryResponse(
-                yearMonth.toString(),
-                income, expenseFixed, expenseVariable, invest,
-                totalExpense, surplus,
-                byCategory
-        );
+        return new Aggregate(income, expenseFixed, expenseVariable, invest,
+                totalExpense, surplus, byCategory);
     }
+
+    /** 집계 중간 결과 holder (내부 전용). */
+    private record Aggregate(
+            BigDecimal income, BigDecimal expenseFixed, BigDecimal expenseVariable,
+            BigDecimal invest, BigDecimal totalExpense, BigDecimal surplus,
+            List<CategoryAmount> byCategory) {}
 }

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:replace="~{fragments/layout :: page('결산', ~{::content})}">
+  <th:block th:fragment="content">
+
+    <div class="mb-3">
+      <h1 class="toss-page-title">결산</h1>
+      <p class="toss-page-subtitle">기간·연 단위 수입/지출 합계</p>
+    </div>
+
+    <!-- 프리셋 -->
+    <div class="d-flex flex-wrap gap-2 mb-2">
+      <a th:each="p : ${presets}"
+         th:href="@{/web/report(from=${p.from}, to=${p.to})}"
+         class="btn toss-pill"
+         th:classappend="${p.active} ? 'toss-pill--primary' : ''"
+         th:text="${p.label}">올해</a>
+    </div>
+
+    <!-- 직접 기간 지정 -->
+    <form method="get" th:action="@{/web/report}" class="toss-card mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col">
+          <label class="form-label small">시작</label>
+          <input type="date" name="from" class="form-control form-control-sm" th:value="${fFrom}">
+        </div>
+        <div class="col">
+          <label class="form-label small">종료</label>
+          <input type="date" name="to" class="form-control form-control-sm" th:value="${fTo}">
+        </div>
+        <div class="col-auto">
+          <button class="btn toss-pill toss-pill--primary" type="submit">조회</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- 요약 -->
+    <section class="mb-2">
+      <p class="toss-period" th:text="${report.label}">2026-01-01 ~ 2026-12-31</p>
+      <p class="toss-amount"
+         th:classappend="${report.surplus.signum() < 0} ? 'toss-amount--negative' : 'toss-amount--positive'"
+         th:text="${report.surplus.signum() > 0 ? '+' : ''} + ${#numbers.formatInteger(report.surplus, 0, 'COMMA')} + '원'">+0원</p>
+      <p class="toss-amount-label">기간 잉여금</p>
+    </section>
+
+    <div class="toss-stats mb-3">
+      <div class="toss-stat">
+        <span class="toss-stat-label">수입</span>
+        <span class="toss-stat-value toss-stat-value--income"
+              th:text="${#numbers.formatInteger(report.income, 0, 'COMMA')} + '원'">0원</span>
+      </div>
+      <div class="toss-stat">
+        <span class="toss-stat-label">지출</span>
+        <span class="toss-stat-value toss-stat-value--expense"
+              th:text="${#numbers.formatInteger(report.totalExpense, 0, 'COMMA')} + '원'">0원</span>
+      </div>
+      <div class="toss-stat">
+        <span class="toss-stat-label">투자·저축</span>
+        <span class="toss-stat-value toss-stat-value--invest"
+              th:text="${#numbers.formatInteger(report.invest, 0, 'COMMA')} + '원'">0원</span>
+      </div>
+    </div>
+
+    <!-- 카테고리별 (거래 있는 것만) -->
+    <h2 class="toss-section-title">카테고리별</h2>
+    <div th:each="c : ${report.byCategory}" th:if="${c.total.signum() != 0}"
+         class="toss-card mb-2">
+      <div class="d-flex justify-content-between align-items-baseline">
+        <span class="fw-semibold" style="color: var(--toss-text-strong); letter-spacing: -0.01em;"
+              th:text="${c.name}">식비</span>
+        <span style="font-variant-numeric: tabular-nums; font-size: 14px;"
+              th:text="${#numbers.formatInteger(c.total, 0, 'COMMA')} + '원'">0원</span>
+      </div>
+    </div>
+    <p th:if="${report.income.signum() == 0 and report.totalExpense.signum() == 0 and report.invest.signum() == 0}"
+       class="form-text">이 기간에 거래가 없어요.</p>
+
+    <div class="d-grid gap-2 mt-3">
+      <a th:href="@{/web/transactions}" class="btn toss-cta toss-cta-secondary">거래 목록</a>
+      <a th:href="@{/web/home}" class="btn toss-cta toss-cta-secondary">홈으로</a>
+    </div>
+
+  </th:block>
+</th:block>
+</body>
+</html>

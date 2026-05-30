@@ -18,6 +18,8 @@
           필터<span th:if="${hasFilter}" class="ms-1" aria-hidden="true"
                     style="color: var(--toss-primary);">●</span>
         </button>
+        <a th:href="${filterQuery.isEmpty()} ? @{/web/transactions/export} : '/web/transactions/export?' + ${filterQuery.substring(1)}"
+           class="btn toss-pill">CSV</a>
         <a th:href="@{/web/transactions/new}" class="btn toss-pill toss-pill--primary">+ 입력</a>
       </div>
     </div>

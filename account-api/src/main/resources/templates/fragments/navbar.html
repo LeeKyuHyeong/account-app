@@ -32,6 +32,11 @@
              th:classappend="${isActive} ? 'active' : ''"
              th:attr="aria-current=${isActive} ? 'page' : null">추이</a>
         </li>
+        <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/report')}">
+          <a class="nav-link" th:href="@{/web/report}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">결산</a>
+        </li>
         <li class="nav-item" th:with="isActive=${#strings.startsWith(uri, '/web/budget')}">
           <a class="nav-link" th:href="@{/web/budget}"
              th:classappend="${isActive} ? 'active' : ''"
@@ -41,6 +46,12 @@
           <a class="nav-link" th:href="@{/web/networth}"
              th:classappend="${isActive} ? 'active' : ''"
              th:attr="aria-current=${isActive} ? 'page' : null">순자산</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('OWNER')"
+            th:with="isActive=${#strings.startsWith(uri, '/web/plan')}">
+          <a class="nav-link" th:href="@{/web/plan}"
+             th:classappend="${isActive} ? 'active' : ''"
+             th:attr="aria-current=${isActive} ? 'page' : null">구독</a>
         </li>
         <li class="nav-item" sec:authorize="hasRole('OWNER')"
             th:with="isActive=${#strings.startsWith(uri, '/web/admin')}">
