@@ -681,7 +681,7 @@ Conventional Commits 형식:
 
 - **KH Shop**:
   - `application-secret.properties` 분리 패턴 → §9.2
-  - GitHub Actions CI/CD → 본 프로젝트 `ci.yml` + `deploy.yml` 에 적용 완료
+  - GitHub Actions CI/CD → 본 프로젝트 `ci.yml` (build+test → deploy 단일 워크플로우) 에 적용 완료
   - OAuth2 (Google/Kakao/Naver) → v1.5 에서 활용 가능
 
 - ~~MyStar Flutter 앱~~ — Flutter 폐기 후 재활용 가치 사라짐 (Riverpod / go_router / Flutter 프로젝트 구조 모두 무관). v1.5+ 네이티브 모바일 재도입 시에만 다시 의미.
@@ -702,7 +702,7 @@ Conventional Commits 형식:
 - **VPS**: kyuhyeong.com, 175.125.21.245, Cafe24 4GB
 - **OS**: CentOS / RHEL 계열
 - **기존 서비스 도메인**: shop/game/itsm/api.kyuhyeong.com (각각 다른 Docker 컨테이너)
-- **운영 중 (2026-05-27~)**: `account.kyuhyeong.com` — 호스트 nginx → `127.0.0.1:8085` → `account-api` 컨테이너. CD: GitHub Actions `deploy.yml` (main push → `production` 환경 → SSH `git pull` + `docker compose up -d account-api`)
+- **운영 중 (2026-05-27~)**: `account.kyuhyeong.com` — 호스트 nginx → `127.0.0.1:8085` → `account-api` 컨테이너. CD: GitHub Actions `ci.yml` 의 `deploy` 잡 (main push → backend 통과 후 → `production` 환경 → SSH `git pull` + `docker compose up -d account-api`)
 - **MariaDB (운영)**: `account-app-mariadb-prod` 컨테이너 내부 전용 (호스트 미노출). 시드 정리 절차는 [`data-cleaning.md`](../data-cleaning.md)
 - **MariaDB (로컬 dev)**: `docker compose up -d` → 호스트 포트 3305 (3306 은 mysqld 점유 회피)
 - **nginx**: 이미 reverse proxy 셋업됨, account 서브도메인 server block 추가됨

@@ -17,7 +17,7 @@
 - [ ] **운영 DB 데이터 클리닝** — dev 시드(테스트가구 + 약한 비번 계정) 제거. 절차: [`data-cleaning.md`](data-cleaning.md). ⚠ 아직 미적용
 - [ ] **member1(user 2) 비번 변경 또는 삭제** — `data-cleaning.md` §2
 - [ ] **root 비밀번호 SSH 차단** — 키 로그인 확립됨 → `/etc/ssh/sshd_config` `PasswordAuthentication no` (키 검증 후)
-- [ ] (선택) GitHub `production` 환경 Required reviewer 등록 → `deploy.yml` 승인 게이트 활성화
+- [ ] (선택) GitHub `production` 환경 Required reviewer 등록 → `ci.yml` 의 `deploy` 잡 승인 게이트 활성화
 - [ ] (선택) DBeaver 운영 DB 접근 — mariadb 를 `127.0.0.1:3316` 노출 (`docker-compose.prod.yml`, SSH 터널 전용)
 
 ---
@@ -41,7 +41,7 @@
 
 상세 diff/사유는 git log + 커밋 메시지. 날짜는 작업 시점.
 
-- **M0~M4 마이그레이션** (2026-05-26~27) — Flutter 8개 화면 그룹 → Thymeleaf SSR 전부 이전. `webChain`(세션+formLogin+CSRF) + `CustomUserDetails` + `SessionHouseholdContextFilter` + layout/navbar fragments. M4 에서 JWT/REST(`/api/**`)/apiChain/`flutter_app` 전부 제거 → 순수 SSR 단일화. **2026-05-27 운영 배포**(account.kyuhyeong.com) + CI(`ci.yml`)/CD(`deploy.yml`)
+- **M0~M4 마이그레이션** (2026-05-26~27) — Flutter 8개 화면 그룹 → Thymeleaf SSR 전부 이전. `webChain`(세션+formLogin+CSRF) + `CustomUserDetails` + `SessionHouseholdContextFilter` + layout/navbar fragments. M4 에서 JWT/REST(`/api/**`)/apiChain/`flutter_app` 전부 제거 → 순수 SSR 단일화. **2026-05-27 운영 배포**(account.kyuhyeong.com) + CI/CD(`ci.yml` — build+test → deploy 단일 워크플로우)
 - **핵심 화면** (M1~M3) — 홈(이번 달 수입/지출/잉여/투자 + 예산 초과 배너), 거래(목록·필터·페이지네이션 / 입력 / 수정 / soft-delete + 변경이력), 영수증(업로드 → Claude 분석 → 신뢰도 분기 컨펌, 전체필드 편집), 추이·예산·순자산(인라인 편집). `findById` PK 직접 로드 격리 누수를 `findOne(Specification)` 으로 다수 수정 (거래/순자산)
 - **폰 UX** (2026-05-28, PR A~H) — 숫자 키패드 `inputmode`, 영수증 촬영 FAB, navbar 햄버거+active, 거래 필터 collapsible, flash 메시지 일관화, 인라인 저장 후 스크롤 위치 보존, 다크모드(`data-bs-theme`). `#httpServletRequest` SpEL 이슈는 `ViewContextAdvice`(`currentUri` 주입)로 해결
 - **기능 보강** (2026-05-28) — 관리자 페이지(`/web/admin`, OWNER 전용, 멤버 목록 + 비번 재설정), 카테고리 관리 UI(`/web/categories`, 삭제 안전 가드), 반복 거래(V4 + 매일 KST 05:00 스케줄러, 멱등)
