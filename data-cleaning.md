@@ -41,18 +41,17 @@ START TRANSACTION;
 SELECT id, name FROM households WHERE id = 2;   -- '테스트가구' 인지 눈으로 확인
 
 -- 자식 → 부모 순서 (RESTRICT)
-DELETE FROM transaction_history WHERE household_id = 2;
-DELETE FROM transactions        WHERE household_id = 2;
-DELETE FROM monthly_summaries   WHERE household_id = 2;
-DELETE FROM merchant_history    WHERE household_id = 2;
-DELETE FROM receipts            WHERE household_id = 2;
-DELETE FROM assets              WHERE household_id = 2;
-DELETE FROM liabilities         WHERE household_id = 2;
-DELETE FROM wedding_items       WHERE household_id = 2;
-DELETE FROM categories          WHERE household_id = 2;
-DELETE FROM household_members   WHERE household_id = 2;
-DELETE FROM households          WHERE id = 2;
-DELETE FROM users               WHERE id IN (3, 4);   -- owner2, member2
+DELETE FROM transaction_history   WHERE household_id = 2;
+DELETE FROM recurring_transactions WHERE household_id = 2;
+DELETE FROM transactions          WHERE household_id = 2;
+DELETE FROM merchant_history      WHERE household_id = 2;
+DELETE FROM receipts              WHERE household_id = 2;
+DELETE FROM assets                WHERE household_id = 2;
+DELETE FROM liabilities           WHERE household_id = 2;
+DELETE FROM categories            WHERE household_id = 2;
+DELETE FROM household_members     WHERE household_id = 2;
+DELETE FROM households            WHERE id = 2;
+DELETE FROM users                 WHERE id IN (3, 4);   -- owner2, member2
 
 -- 검증: households=1, users=2, categories=22 면 정상
 SELECT (SELECT COUNT(*) FROM households) AS households_left,

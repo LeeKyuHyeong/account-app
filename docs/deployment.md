@@ -1,11 +1,11 @@
-# 배포 가이드 (Week 6)
+# 배포 가이드
 
 운영 환경 (kyuhyeong.com VPS) 에 account-app 을 첫 배포할 때의 순서.
 
-> 본 가이드는 사람이 손으로 한 번 따라가는 절차를 정리한 것. CI/CD 가 자동화하는 부분은
-> [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) 참고. **CD 자동화 (이미지
-> push + VPS 재시작) 는 별도 PR 에서 추가** — 본 가이드는 수동 배포 + CI(테스트만)
-> 단계까지를 다룬다.
+> 본 가이드는 **최초 1회 수동 셋업**(§1~6) 절차다. 이후 일상 배포는 **CD 자동화됨** —
+> `main` push → [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) 가
+> `production` 환경 승인 게이트 통과 후 SSH 로 `git pull` + `docker compose build/up account-api`
+> 까지 자동 수행 (§8 참조). CI(테스트)는 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
 ## 0. 사전 준비 (사용자 액션)
 
@@ -104,19 +104,20 @@ curl -I https://account.kyuhyeong.com/login
 
 `.github/workflows/ci.yml` 이 push / PR 시 자동으로 Backend (Java 21 + Gradle 빌드 + 모든 테스트) 를 실행한다.
 
-CI 실패는 main branch protection 으로 머지 차단 (GitHub 설정에서 별도 활성화 필요).
+CI 실패는 main branch protection 으로 머지 차단 (GitHub 설정에서 별도 활성화 필요). CD(`deploy.yml`)는 CI 와 독립 트리거이므로, 배포 전 CI 초록 여부는 §8 승인 단계에서 눈으로 확인한다.
 
-## 8. 운영 (롤링 업데이트)
+## 8. 운영 (롤링 업데이트) — CD 자동화됨
 
-코드 푸시 후 VPS 에서:
+일상 배포는 **`main` push 시 `deploy.yml` 이 자동 수행**: `production` 환경 승인 게이트(Required reviewer 등록 시)에서 1-click 승인 → SSH 로 VPS 접속 → 아래 명령 자동 실행.
 
 ```bash
 cd /root/account-app
-git pull
+git pull --ff-only
 docker compose -f docker-compose.prod.yml --env-file .env.prod build account-api
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d account-api
+docker image prune -f
 ```
 
-DB 마이그레이션 (V4, V5, ...) 이 포함된 경우 Flyway 가 기동 시 자동 적용.
+DB 마이그레이션 (V4, V5, V6, ...) 이 포함된 경우 Flyway 가 기동 시 자동 적용.
 
-CD 자동화 (별도 PR) 추가 후에는 git push to main → GitHub Actions → SSH 로 위 명령 자동 실행 흐름이 된다.
+> 필요한 GitHub Secrets: `DEPLOY_SSH_PRIVATE_KEY`, `DEPLOY_SSH_HOST` / Variables: `DEPLOY_SSH_USER`, `DEPLOY_SSH_PORT`, `DEPLOY_PATH`. 수동 배포가 필요하면 위 명령을 VPS 에서 직접 실행해도 된다. Actions 탭의 `workflow_dispatch` 로 수동 트리거도 가능.

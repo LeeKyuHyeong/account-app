@@ -53,7 +53,7 @@ Andrej Karpathy의 LLM 코딩 함정 관찰을 기반으로 함.
 - `application-dev.yml` / `application-stg.yml` / `application-prd.yml` 분리는 도입 X. 현재는 `application.yml` + `application-secret.yml` (gitignored) + env 오버라이드 (운영도 동일 — `docker-compose.prod.yml` 에서 env 주입).
 - `account-batch` 가 비어 있어도 첫 잡 추가 시 `AbstractScheduledJob` 같은 부모 클래스부터 만들지 마라. 한 잡으로 끝나면 한 클래스로 끝낸다.
 - 인라인 폼 저장/삭제를 위해 새 `Web*Service` 만들기 전에 기존 `TransactionService` / `NetWorthService` / `MerchantHistoryService` 등에 메서드 추가가 가능한지부터 본다 (Web 컨트롤러 = 얇은 어댑터 컨벤션).
-- **MVP scope (`docs/account.md` §10 결정 사항 + §8 백로그) 를 임의로 확장하지 마라**: 회원가입/초대 UI, OWNER/MEMBER 권한 차등(관리자 페이지의 OWNER 게이트는 예외적 최소 적용), FCM 푸시, 결혼지출 화면 — 전부 v1.1 / v1.5 / v2 로 유예된 항목. (카테고리 커스터마이징 UI 는 2026-05-28 본격 구현됨 — 더 이상 유예 항목 아님.)
+- **MVP scope (`docs/account.md` §10 결정 사항 + §8 백로그) 를 임의로 확장하지 마라**: 회원가입/초대 UI, OWNER/MEMBER 권한 차등(관리자 페이지의 OWNER 게이트는 예외적 최소 적용), FCM 푸시, 결혼지출 화면 — 전부 v1.1 / v1.5 / v2 로 유예된 항목. (카테고리 커스터마이징 UI 는 2026-05-28 본격 구현됨 — 더 이상 유예 항목 아님. 구독 티어는 2026-05-30 Phase 1[FREE/FAMILY/PRO + 영수증 AI 월 한도 게이팅] 구현됨 — 단 실결제 Phase 2 는 여전히 유예.)
 
 ---
 
@@ -132,7 +132,7 @@ cp application-secret.yml.example application-secret.yml
 # MariaDB (호스트 포트 3305, 호스트 3306 은 기존 mysqld 점유)
 docker compose up -d
 
-# 백엔드 기동 — Flyway 가 V1__init / V2__seed_dev / V3__... 자동 적용
+# 백엔드 기동 — Flyway 가 V1~V6 자동 적용 (V5: PERSONAL→FREE 리네임, V6: 미사용 테이블 DROP)
 ./gradlew :account-api:bootRun
 
 # 브라우저로 http://localhost:8080/login
@@ -181,10 +181,10 @@ account-core   ←─── account-api ←─── (없음)
    └── account-batch    └── account-ai
 ```
 
-- **`account-core`**: 도메인 Entity (12개) + Repository + Multi-tenant 격리 본체 (`HouseholdContext`, `HouseholdFilterAspect`, Hibernate `@Filter`) + Flyway 마이그레이션. **다른 어떤 `account-*` 모듈에도 의존 X** (`build.gradle.kts` 의 강한 정책).
+- **`account-core`**: 도메인 Entity (11개) + Repository + Multi-tenant 격리 본체 (`HouseholdContext`, `HouseholdFilterAspect`, Hibernate `@Filter`) + Flyway 마이그레이션 (V1~V6). **다른 어떤 `account-*` 모듈에도 의존 X** (`build.gradle.kts` 의 강한 정책).
 - **`account-ai`**: Claude Vision API 호출 + 프롬프트 조립 + JSON 파싱. **다른 어떤 `account-*` 모듈에도 의존 X**. `MerchantHistoryProvider` 같은 인터페이스만 외부에 공개.
 - **`account-api`**: **Thymeleaf SSR 컨트롤러** (`Web*Controller`, `/web/**`) + **Spring Security 세션 + formLogin** + 영수증 인제스천 흐름. `account-core` + `account-ai` 둘 다에 의존하는 유일한 모듈 — 어댑터 (예: `JpaMerchantHistoryProvider`) 는 이쪽에 배치. ~~REST 컨트롤러 + JWT 인증~~ 은 M4 (2026-05-27) 에 제거됨.
-- **`account-batch`**: 월말 집계 / 이미지 정리 계획만 — **현재 비어 있음**. `account-core` 에만 의존, `account-api` 의존 금지. (반복 거래 스케줄러는 현재 잡이 1개라 `account-api/recurring/` 안에 거치 — 잡이 2개 이상 되면 본 모듈로 이전.)
+- **`account-batch`**: 영수증 단계적 압축/삭제 잡 계획만 — **현재 비어 있음**. (~~월말 집계 잡~~ 은 V6(2026-05-30)에서 제거 — 집계는 on-the-fly 라 불필요. 그전엔 `MonthlySummaryJob` 이 있었음.) `account-core` 에만 의존, `account-api` 를 의존하지 않음(역방향: `account-api` 가 본 모듈을 포함해 `@Scheduled` 잡을 같은 프로세스에서 기동). 반복 거래 스케줄러는 현재 잡이 1개라 `account-api/recurring/` 안에 거치 — 잡이 2개 이상 되면 본 모듈로 이전.
 - ~~`flutter_app`~~: M4 (2026-05-27) 에 디렉터리 삭제 — Thymeleaf SSR 단일화.
 
 ### 6.2 Multi-tenant 격리 흐름 (본 프로젝트의 가장 중요한 디자인)
@@ -202,7 +202,7 @@ account-core   ←─── account-api ←─── (없음)
 
 핵심 보장: **`HouseholdContext` 미설정 상태에서 격리 엔티티를 조회하면 `-1` sentinel 로 필터가 켜져 0 rows 반환** (`HouseholdFilterAspect.NO_TENANT_SENTINEL`). 인증 단계 누수에 대한 두 번째 방어선이다 — 임의로 끄지 말 것.
 
-비격리 Entity (Filter 미적용): `User`, `Household`, `HouseholdMember`. 나머지 9개 도메인 Entity는 `@Filter("householdFilter")` 가 클래스에 적용되어 있다 — 비격리 엔티티는 코드로 `findByHouseholdId*` 가드 (관리자 비번 재설정의 멤버십 검증 패턴).
+비격리 Entity (Filter 미적용): `User`, `Household`, `HouseholdMember`. 나머지 8개 도메인 Entity는 `@Filter("householdFilter")` 가 클래스에 적용되어 있다 — 비격리 엔티티는 코드로 `findByHouseholdId*` 가드 (관리자 비번 재설정의 멤버십 검증 패턴).
 
 ### 6.3 핵심 흐름
 
@@ -213,6 +213,9 @@ account-core   ←─── account-api ←─── (없음)
 - **카테고리 관리**: `WebCategoryController` → `CategoryQueryService` 의 `create/edit/delete`. 단건 조회는 `findAll().filter()` (Hibernate filter 적용). 삭제 시 `transactionRepository.countByCategoryId` + `recurringRepository.countByCategoryId` 둘 다 0 이어야 통과 — 하나라도 양수면 `IllegalStateException` + 어디서 막혔는지 friendly 메시지. DB FK 가 RESTRICT 라 사전 카운트는 사용자 친절 + 정확한 안내용.
 - **반복 거래 자동 적재**: `RecurringTransactionScheduler` 가 매일 KST 05:00 `@Scheduled` → `RecurringTransactionService.runDueAcrossHouseholds(today)` → 가구별 `runDueForHousehold` (자체 `@Transactional` + `HouseholdContext` 명시 set/clear). 가구 단위 try-catch 라 한 가구 실패가 다음 가구를 막지 않음. `runRule` 은 `last_run_year_month` (YYYY-MM) 가 현재월이면 skip (멱등), today < fireDate 면 skip, day=31 같은 짧은 달은 말일로 클램프. 발화 시 `TransactionService.create` 재사용 → CONFIRMED 거래 + history CREATE + merchant_history upsert. author=`household.owner`. 사용자가 `POST /web/recurring/run-now` 로 동일 로직 즉시 실행 가능 (멱등).
 - **관리자 (OWNER 전용)**: `WebAdminController` → `AdminUserService.listMembers / resetPassword` → BCrypt 인코딩 후 `User.changePassword(hash)`. 가구 경계는 `findByHouseholdIdAndUserId` 로 직접 가드 (User/HouseholdMember 비격리).
+- **기간/연 결산**: `WebReportController` (`/web/report`) → `MonthlySummaryService.getRange(from, to, label)` (월 집계 `get(YearMonth)` 과 private `aggregate(from,to)` 공용 → `PeriodSummaryResponse`). 프리셋(이번 달/지난 달/올해/작년)은 컨트롤러가 날짜만 계산, 기본 올해 전체.
+- **거래 CSV 내보내기**: `WebTransactionController.export` (`GET /web/transactions/export`) → `TransactionService.listForExport` (목록과 동일 `buildSpec`, 페이지네이션 없이 전체) → UTF-8 **BOM 바이트 직접 부착**(엑셀 한글) + RFC4180 escape. 외부 라이브러리 없음.
+- **구독 플랜 (OWNER 전용)**: `WebPlanController` (`/web/plan`) → `PlanService` (가구 `planType` 조회/변경 + 이번 달 영수증 사용량). 게이팅 본체는 `ReceiptIngestionService.ingest` 맨 앞 — `PlanType.monthlyReceiptQuota()` 초과 시 `ReceiptQuotaExceededException` (Claude 호출 전 fail-fast). 티어 FREE/FAMILY/PRO (실결제 비범위).
 
 ---
 
