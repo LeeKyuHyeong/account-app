@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
@@ -123,7 +124,7 @@ public class ReceiptIngestionService {
                 .author(uploader)
                 .category(category)
                 .amount(result.total() == null ? BigDecimal.ZERO : result.total())
-                .occurredAt(result.date() == null ? LocalDateTime.now() : result.date().atStartOfDay())
+                .occurredAt(resolveOccurredAt(result.date(), result.time()))
                 .merchant(result.merchant())
                 .paymentMethod(result.paymentMethod())
                 .memo(null)
@@ -139,6 +140,22 @@ public class ReceiptIngestionService {
                 receipt.getId(), tx.getId(), result.merchant(), result.total(), result.confidence());
 
         return new IngestResult(receipt.getId(), tx.getId(), result);
+    }
+
+    /**
+     * 분석된 일자/시각을 거래 발생 시각으로 조합한다.
+     *
+     * <ul>
+     *   <li>일자 없음 → 분석 시점의 현재 시각 (KST)</li>
+     *   <li>일자 + 시각 → 영수증에 찍힌 시각 그대로</li>
+     *   <li>일자만 (시각 못 읽음) → 그 날짜 + 분석 시점의 현재 시각</li>
+     * </ul>
+     */
+    private LocalDateTime resolveOccurredAt(LocalDate date, LocalTime time) {
+        if (date == null) {
+            return LocalDateTime.now(KST);
+        }
+        return date.atTime(time != null ? time : LocalTime.now(KST));
     }
 
     private String serialize(ReceiptAnalysisResult result) {

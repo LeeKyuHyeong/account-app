@@ -45,7 +45,14 @@
 
         <div class="mb-3">
           <label class="form-label">결제수단 <span style="color: var(--toss-text-muted); font-weight: 400;">(선택)</span></label>
-          <input type="text" name="paymentMethod" class="form-control" th:value="${form['paymentMethod']}">
+          <select name="paymentMethod" class="form-select">
+            <option value="" th:selected="${form['paymentMethod'] == null or form['paymentMethod'] == ''}">미지정</option>
+            <option value="신용카드" th:selected="${form['paymentMethod'] == '신용카드'}">신용카드</option>
+            <option value="체크카드" th:selected="${form['paymentMethod'] == '체크카드'}">체크카드</option>
+            <option value="현금" th:selected="${form['paymentMethod'] == '현금'}">현금</option>
+            <option value="계좌이체" th:selected="${form['paymentMethod'] == '계좌이체'}">계좌이체</option>
+            <option value="간편결제" th:selected="${form['paymentMethod'] == '간편결제'}">간편결제</option>
+          </select>
         </div>
 
         <div class="mb-0">

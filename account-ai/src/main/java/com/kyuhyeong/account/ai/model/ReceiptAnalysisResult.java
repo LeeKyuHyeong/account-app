@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -24,6 +25,9 @@ public record ReceiptAnalysisResult(
 
         @JsonProperty("date")
         LocalDate date,
+
+        @JsonProperty("time")
+        LocalTime time,
 
         @JsonProperty("merchant")
         String merchant,
